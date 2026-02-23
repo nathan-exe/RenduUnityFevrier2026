@@ -22,7 +22,7 @@ voici la liste des features implémentées :
 
 
 Ce que j'aimerais ajouter :
-- binary space partitionning ou octree pour améliorer drastiquement les performances du fragment shader. (actuellent, le jeu lag quand un arbre a trpo de branches et prend beaucoup de place à l'écran)
+- binary space partitionning ou octree pour améliorer drastiquement les performances du fragment shader. (actuellent, le jeu lag quand un arbre a trop de branches et prend beaucoup de place à l'écran)
 - texture mapping sur le bois
 - système de pousse de l'arbre plus polished
 - bounding mesh plus serré au lieu d'une bounding box pour réduire le coût du fragment shader
