@@ -27,9 +27,9 @@ Material:
     - _pixelsPerUnit: 10
     m_Floats:
     - _maxIterations: 30
-    - _smoothing: 0.3
+    - _smoothing: 0.35
     - _stepSize: 0.1
-    - _threshold: 0.0075
+    - _threshold: 0.01
     m_Colors:
     - _albedo: {r: 0.5854396, g: 0.69577277, b: 0.8679245, a: 1}
     - _boundingBoxCenter: {r: 78.31344, g: 49.397125, b: -28.023863, a: 0}

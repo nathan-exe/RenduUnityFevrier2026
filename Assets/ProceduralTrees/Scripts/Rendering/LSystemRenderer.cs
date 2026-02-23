@@ -14,15 +14,7 @@ namespace NathanTazi
         [SerializeField] private MeshRenderer _meshRenderer;
     
         ComputeBuffer buffer;
-        private void OnValidate() 
-        {
-            Setup();
-        }
-
-        private void Start()
-        {
-            Setup();
-        }
+        
         void OnLSystemRegenerated()
         {
             Setup();
@@ -60,7 +52,7 @@ namespace NathanTazi
         {
             if (cube == null)
                 cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-
+            
             Vector3 min = transform.TransformPoint(generator.BoundingBox.Item1);
             Vector3 max = transform.TransformPoint(generator.BoundingBox.Item2);
         

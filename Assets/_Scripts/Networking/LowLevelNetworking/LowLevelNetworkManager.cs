@@ -166,8 +166,6 @@ public class LowLevelNetworkManager : NetworkBehaviour
     }
     private void CleanUpDeadConnectionsAndAcceptNewConnections()
     {
-        print("CleanUpDeadConnectionsAndAcceptNewConnections()");
-        
         // Clean up dead connections.
         for (int i = 0; i < _connections.Length; i++)
         {

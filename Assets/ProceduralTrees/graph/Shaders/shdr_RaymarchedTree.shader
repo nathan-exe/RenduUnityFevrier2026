@@ -257,9 +257,6 @@ Shader "Vegetation/RaymarchedTree"
                     //distance quasi nulle <=> surface touchée
                     if (sceneHit.distance<=_threshold)
                     {
-                        
-                        float segId01 = (float)sceneHit.segID/(float)_segmentCount;
-                        
                         //samplePoint = rayOrigin+rayDirection*rayLength;
 
                         //compute normal
@@ -288,7 +285,7 @@ Shader "Vegetation/RaymarchedTree"
                         //return lerp( float4(1,0,0,1) , float4(color,1),_segments[sceneHit.segID].age);
                     }
                     
-                    rayLength += sceneHit.distance;
+                    rayLength += sceneHit.distance + _threshold*.0;
                     clip((rayLength < maxRayLength)-.1);
                 }
 

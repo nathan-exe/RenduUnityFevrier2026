@@ -7,8 +7,22 @@ namespace NathanTazi
     public class PlantGraph
     {
         public List<Segment> segments = new();
-        public List<Vector3> leaves = new();
+        public List<Leaf> leaves = new();
 
+        public struct Leaf
+        {
+            public Vector3 position;
+            public Matrix4x4 branchTransform;
+            public float size;
+
+            public Leaf(Vector3 position, Matrix4x4 branchTransform, float size)
+            {
+                this.position = position;
+                this.branchTransform = branchTransform;
+                this.size = size;
+            }
+        }
+        
         public Tuple<Vector3, Vector3> GetBoundingBox(float margin=3f)
         {
             Vector3 min = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);

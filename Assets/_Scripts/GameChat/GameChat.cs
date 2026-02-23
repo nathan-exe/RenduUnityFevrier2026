@@ -48,7 +48,7 @@ namespace Chat
         {
             NetworkManager.Singleton.OnClientConnectedCallback+=(ulong clientID)=>
             {
-                if(NetworkManager.Singleton.IsServer)
+                if(NetworkManager.Singleton.IsServer && clientID!=NetworkManager.Singleton.LocalClientId)
                     BroadcastChatMessage("Client connected : " + clientID);
             };
             

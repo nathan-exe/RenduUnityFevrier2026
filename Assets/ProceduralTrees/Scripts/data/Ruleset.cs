@@ -12,8 +12,6 @@ namespace NathanTazi
 
         public Dictionary<char,string> Refresh()
         {
-            Debug.Log("modified disctionnary.");
-            
             Clear();
             foreach (var input in rules)
             {

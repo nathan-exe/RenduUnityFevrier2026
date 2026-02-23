@@ -17,7 +17,7 @@ namespace NathanTazi
             }
 
             Gizmos.color =  Color.red;
-            foreach (Vector3 leaf in generator.Graph.leaves)
+            foreach (PlantGraph.Leaf leaf in generator.Graph.leaves)
             {
                 //Gizmos.DrawSphere(transform.TransformPoint(leaf),0.05f);
             }

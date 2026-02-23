@@ -128,7 +128,12 @@ namespace NathanTazi
                         turtle.point += turtle.direction * actualStepSize;
                         Vector3 b = turtle.point;
                         plantGraph.segments.Add(new Segment(a, b, turtle.radius,age));
-                        plantGraph.leaves.Add(turtle.point);
+                        
+                        plantGraph.leaves.Add(new(
+                            turtle.point,
+                            turtle.transform,
+                            turtle.radius/baseRadius));
+                        
                         break; }
                 
                     // '-' : turn down
