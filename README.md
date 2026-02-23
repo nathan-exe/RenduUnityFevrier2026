@@ -1,6 +1,8 @@
-## Arbres procéduraux : 
-J'ai implémenté un POC du <a href="https://docs.google.com/document/d/1pZPgNVconWkuDLs-SOfueWEL2C0AaA0Uoo-jqUDj5-E/edit?usp=sharing">sujet que j'avais recherché pour le concours du master de l'enjmin</a>.
+## Arbres procéduraux 
 
+<img width="753" height="623" alt="image" src="https://github.com/user-attachments/assets/d39f45a5-175b-4a20-836b-ffd802d49596" />
+
+J'ai implémenté un POC du <a href="https://docs.google.com/document/d/1pZPgNVconWkuDLs-SOfueWEL2C0AaA0Uoo-jqUDj5-E/edit?usp=sharing">sujet que j'avais recherché pour le concours du master de l'enjmin</a>.
 
 voici la liste des features implémentées : 
 - génération procédurale de la structure d'arbres en 3D (graphs) avec des l systems
