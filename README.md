@@ -14,6 +14,7 @@ voici la liste des features implémentées :
 - dessin des arbres en wireframe avec les gizmos
 - dessin des arbres en 3D avec du raymarching dans le fragment shader de leur bounding box
   - raymarching sur une liste de SDFs de cylindres représentant chaque branche de l'arbre
+  - smoothing des intersections entre les branches
   - phong shading
   - depth write pour intégrer correctement les objets à la scène
   - shadow pass (avec niveau de détail réduit)
