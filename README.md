@@ -9,7 +9,7 @@ voici la liste des features implémentées :
   - réécriture récursive de chaines de symboles + turtle pour générer un graph en 3D  
   - un alphabet de symboles qui permettent de gérer la rotation, la longueur ainsi que l'épaisseur des branches
   - interpolation possible entre différents niveaux de pousse de l'abre
-  - réduction du nombre de segments lorqsu'ils se suivent sans se diviser en d'autres branches
+  - réduction du nombre de segments lorsqu'ils se suivent sans se diviser en d'autres branches
   - variables aléatoires, avec possibilité de changer la seed de l'arbre
 - dessin des arbres en wireframe avec les gizmos
 - dessin des arbres en 3D avec du raymarching dans le fragment shader de leur bounding box
