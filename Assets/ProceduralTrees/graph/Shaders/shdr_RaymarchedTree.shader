@@ -5,11 +5,14 @@ Shader "Vegetation/RaymarchedTree"
     { 
          [HideInInspector] _boundingBoxCenter ("_boundingBoxCenter", Vector) = (.25, .5, .5, 1)
          [HideInInspector] _boundingBoxSize  ("_boundingBoxSize", Vector) = (.25, .5, .5, 1)
-        
+
         //raymarching
         _threshold ("Raymarch hit threshold", Float) = .1
         _maxIterations ("max Iterations", Int) = 10
         _smoothing ("smoothing", Float) = 1
+        
+        //material
+        _albedo ("albedo", Color) = (1,1,1, 1)
         
     }
 
@@ -19,7 +22,8 @@ Shader "Vegetation/RaymarchedTree"
         // SubShader Tags define when and under which conditions a SubShader block or
         // a pass is executed.
         ZWrite On
-        ZTest LEqual 
+        ZTest LEqual
+        Cull Off
         Tags { "RenderType" = "Opaque" "Queue" = "Geometry"  "RenderPipeline" = "UniversalPipeline" }
         
         Pass
@@ -68,6 +72,9 @@ Shader "Vegetation/RaymarchedTree"
             StructuredBuffer<Segment> _segments; //todo : binary space partitionning 
             int _segmentCount;
             matrix _treeTransform;
+
+            //material
+            float3 _albedo;
 
             //https://iquilezles.org/articles/smin/
             float smooth_min( float a, float b, float k )
@@ -223,6 +230,8 @@ Shader "Vegetation/RaymarchedTree"
             fragOutput frag(V2f IN) 
             {
                 fragOutput output;
+
+                
                 
                 //define bounding box
                 float3 boxMin = _boundingBoxCenter - _boundingBoxSize*0.5;
@@ -231,7 +240,9 @@ Shader "Vegetation/RaymarchedTree"
                 float3 bbInvWorldSize = 1.0/bbWorldSize;
                 
                 //define ray
-                const float3 rayOrigin = IN.worldPos.xyz;
+                float3 rayOrigin = is_in_bounding_box(_WorldSpaceCameraPos.xyz,boxMin-1,boxMax+1) ? _WorldSpaceCameraPos.xyz : IN.worldPos.xyz;
+                float2 screenPos = mul(unity_WorldToCamera,IN.worldPos.xyz);
+                
                 const float3 rayDirection = -GetWorldSpaceNormalizeViewDir(IN.worldPos.xyz);// normalize(IN.worldPos.xyz- _WorldSpaceCameraPos.xyz );
                 const float maxRayLength = ComputeMaxRayLengthInBoundingBox(rayOrigin,rayDirection,boxMin ,boxMax);
                 
@@ -263,18 +274,13 @@ Shader "Vegetation/RaymarchedTree"
                         float lambert = saturate(dot(normal,_MainLightPosition));
                         float specular = pow(saturate(dot(reflect(_MainLightPosition, normal), rayDirection)), 2);
                         float fresnel = pow(saturate(dot(reflect(rayDirection, normal), rayDirection)), 1.4);
-                        float3 color = lerp(unity_AmbientSky*.5 ,_MainLightColor,lambert) + specular * (fresnel*.5+05 * _MainLightColor) + fresnel * unity_AmbientSky;
-
+                        float3 light = lerp(unity_AmbientSky *1.5 ,_MainLightColor,lambert) + specular * (_MainLightColor)*.1 + fresnel * unity_AmbientSky;
+                        float3 color = _albedo * light;
+                        
                         //write to depth
                         float4 linearDepth = TransformWorldToHClip(samplePoint);
                         float depth = linearDepth.z / linearDepth.w;
                         output.depth = depth;
-
-
-#if UNITY_REVERSED_Z
-	// Reversed, **1** at the near plane, **0** at the far plane
-	//output.depth = 1.0f - output.depth;
-#endif
                         
                         output.color = float4(color,1);
                         return output;
