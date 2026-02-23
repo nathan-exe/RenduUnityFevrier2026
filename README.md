@@ -1,4 +1,27 @@
-## Explication du Projet : 
+## Arbres procéduraux : 
+J'ai implémenté un POC du <a href="https://docs.google.com/document/d/1pZPgNVconWkuDLs-SOfueWEL2C0AaA0Uoo-jqUDj5-E/edit?usp=sharing">sujet que j'avais recherché pour le concours du master de l'enjmin</a>.
+voici la liste des features implémentées : 
+- génération procédurale de la structure d'arbres en 3D (graphs) avec des l systems
+  - réécriture récursive de chaines de symboles + turtle pour générer un graph en 3D  
+  - un alphabet de symboles qui permettent de gérer la rotation, la longueur ainsi que l'épaisseur des branches
+  - interpolation possible entre différents niveaux de pousse de l'abre
+  - réduction du nombre de segments lorqsu'ils se suivent sans se diviser en d'autres branches
+  - variables aléatoires, avec possibilité de changer la seed de l'arbre
+- dessin des arbres en wireframe avec les gizmos
+- dessin des arbres en 3D avec du raymarching dans le fragment shader de leur bounding box
+  - raymarching sur une liste de SDFs de cylindres représentant chaque branche de l'arbre
+  - phong lightning
+  - depth write pour intégrer correctement les objets à la scène
+  - shadow pass (avec niveau de détail réduit)
+- dessin de feuilles au bout des branches avec des meshes texturés
+Ce que j'aimerais ajouter :
+- binary space partitionning ou octree pour améliorer drastiquement les performances du fragment shader. (actuellent, le jeu lag quand un arbre a trpo de branches et prend beaucoup de place à l'écran)
+- texture mapping sur le bois
+- système de pousse de l'arbre mieux polished
+- bounding mesh plus serré au lieu d'une bounding box
+- animation du vent dans les branches
+  
+## Multijoueur en ligne et chat écrit : 
 
 Ce projet contient deux systèmes différents : 
 - Un personnage dont les déplacements sont répliqués sur les différents clients grâce à NetcodeForGameobjects et à un component NetworkTransform.
