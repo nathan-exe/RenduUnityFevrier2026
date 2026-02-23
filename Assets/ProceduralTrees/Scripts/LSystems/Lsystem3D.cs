@@ -18,6 +18,7 @@ namespace NathanTazi
     /// () -> déclarer le début ou la fin d'une nouvelle itération
     /// / -> enlever un symbole
     /// 1,2,3,4... -> pour diviser le rayon de la branche
+    /// u -> pour faire monter la branche
     /// </summary>
     [Serializable]
     public class Lsystem3D : Lsystem
@@ -28,6 +29,7 @@ namespace NathanTazi
         [SerializeField] public Vector2 YawAngleRange;
         [SerializeField] public Vector2 PitchAngleRange;
         [SerializeField] public Vector2 RollAngleRange;
+        [SerializeField] [Range(0,1)] public float verticalAngleBiasStrength;
         [SerializeField] public float baseRadius;
         [SerializeField][Range(0,1)] public float growth;
         
@@ -67,30 +69,18 @@ namespace NathanTazi
         private struct Turtle
         {
             public Vector3 point;
-        
-            //angles
-            public float roll;
-            public float yaw;
-            public float pitch;
-            // public Vector3 direction => 
-            //     Quaternion.AngleAxis( yaw, Vector3.up)
-            //     *Quaternion.AngleAxis( pitch, Vector3.right) 
-            //     *Quaternion.AngleAxis( roll, Vector3.forward) 
-            //     * Vector3.up;
-            
-            Matrix4x4 transform;
-            // public Vector3 direction => 
-            //     Quaternion.AngleAxis( roll, Vector3.forward) 
-            //     *Quaternion.AngleAxis( pitch, Vector3.right) 
-            //     *Quaternion.AngleAxis( yaw, Vector3.up)
-            //     * Vector3.up;
-            public Vector3 direction => transform * Vector3.up;
+
+            public Matrix4x4 transform ;
+            public Vector3 direction => (transform * Vector3.up);
+
             public float radius;
         }
+        
         public override PlantGraph GetGraph()
         {
             Random.InitState(seed);
             Turtle turtle = new Turtle();
+            turtle.transform = Matrix4x4.identity;
             turtle.radius = baseRadius;
         
             Stack<Turtle> stack = new Stack<Turtle>();
@@ -113,10 +103,14 @@ namespace NathanTazi
                     case 'f': {
                         if (!enableBranchReduction||(i == lastSymbolID || i==0 || PreviousNonParenthesisCharacter(Symbols,i)!='f'))
                             plantStart = turtle.point;
-                        turtle.yaw += Random.Range(-angleRandomness,angleRandomness);
-                        turtle.pitch += Random.Range(-angleRandomness,angleRandomness);
-                        turtle.roll += Random.Range(-angleRandomness,angleRandomness);
-                        turtle.tra
+                        //turtle.yaw += Random.Range(-angleRandomness,angleRandomness);
+                        //turtle.pitch += Random.Range(-angleRandomness,angleRandomness);
+                        //turtle.roll += Random.Range(-angleRandomness,angleRandomness);
+                        turtle.transform = turtle.transform * Matrix4x4.Rotate(
+                            Quaternion.Euler(Random.Range(-angleRandomness, angleRandomness),
+                                Random.Range(-angleRandomness, angleRandomness),
+                                Random.Range(-angleRandomness, angleRandomness)));
+                        
                         turtle.point += turtle.direction * actualStepSize ;
                         if (!enableBranchReduction||(i == lastSymbolID || (NextNonParenthesisCharacter(Symbols,i) != 'f' )))
                             //&& !(i < lastSymbolID-1 && (Symbols[i + 1] == '(' || Symbols[i + 1] == '(')&&Symbols[i + 2] == 'f' ) ))
@@ -139,32 +133,41 @@ namespace NathanTazi
                 
                     // '-' : turn down
                     case '-' :
-                        turtle.pitch -= PitchAngleRange.x + Random.Range(-PitchAngleRange.y,PitchAngleRange.y);
+                        turtle.transform = turtle.transform * Matrix4x4.Rotate( Quaternion.Euler(-(PitchAngleRange.x + Random.Range(-PitchAngleRange.y,PitchAngleRange.y)),0,0));
                         break;
                 
                     // '+' : turn up
                     case '+' :
-                        turtle.pitch += PitchAngleRange.x + Random.Range(-PitchAngleRange.y,PitchAngleRange.y);
+                        turtle.transform = turtle.transform * Matrix4x4.Rotate( Quaternion.Euler(PitchAngleRange.x + Random.Range(-PitchAngleRange.y,PitchAngleRange.y),0,0));
                         break;
                 
                     //'<' : turn left
                     case '<' :
-                        turtle.yaw -= YawAngleRange.x + Random.Range(-YawAngleRange.y,YawAngleRange.y);
+                        turtle.transform = turtle.transform * Matrix4x4.Rotate( Quaternion.Euler(0, -(YawAngleRange.x + Random.Range(-YawAngleRange.y,YawAngleRange.y)),0));
                         break;
                 
                     //'>' : turn right
                     case '>' :
-                        turtle.yaw += YawAngleRange.x + Random.Range(-YawAngleRange.y,YawAngleRange.y);
+                        turtle.transform = turtle.transform * Matrix4x4.Rotate( Quaternion.Euler(0, (YawAngleRange.x + Random.Range(-YawAngleRange.y,YawAngleRange.y)),0));
                         break;
                 
                     // '.' : turn down
                     case '.' :
-                        turtle.roll -= RollAngleRange.x + Random.Range(-RollAngleRange.y,RollAngleRange.y);
+                        turtle.transform = turtle.transform * Matrix4x4.Rotate( Quaternion.Euler(0, 0,-(RollAngleRange.x + Random.Range(-RollAngleRange.y,RollAngleRange.y))));
                         break;
                 
                     // ':' : turn up
                     case ':' :
-                        turtle.roll += RollAngleRange.x + Random.Range(-RollAngleRange.y,RollAngleRange.y);
+                        turtle.transform = turtle.transform * Matrix4x4.Rotate( Quaternion.Euler(0, 0,(RollAngleRange.x + Random.Range(-RollAngleRange.y,RollAngleRange.y))));
+                        break;
+                    
+                    case 'u' :
+                        turtle.transform = Matrix4x4.Rotate( 
+                            Quaternion.Slerp(
+                                Quaternion.LookRotation(turtle.transform*Vector3.forward,turtle.direction),
+                                Quaternion.LookRotation(Vector3.ProjectOnPlane( turtle.transform*Vector3.forward,Vector3.up).normalized,Vector3.up),
+                                verticalAngleBiasStrength)
+                            );
                         break;
                 
                     // '[' : push state
@@ -191,10 +194,15 @@ namespace NathanTazi
 
                 if (!foundSymbol)
                 {
-                    if(symbol>'0' && symbol<'9')
+                    if(symbol>'0' && symbol<='9')
                     {
-                        int divider = symbol-'0';
-                        turtle.radius /= divider;
+                        int number = symbol-'0';
+                        turtle.radius *= (1.0f - 1.0f/number);
+                    }
+                    else if(symbol>='a' && symbol<='f')
+                    {
+                        int number = symbol-'a'+ 10;
+                        turtle.radius *= (1.0f - 1.0f/number);
                     }
                 }
 

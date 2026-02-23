@@ -76,6 +76,7 @@ public class LsystemGeneratorEditor : Editor
                 "  -+ -> tourner (pitch)\n" +
                 "  <> -> tourner (yaw)\n" +
                 "  .: -> tourner (roll)\n" +
+                "  u -> pour faire monter la branche vers le haut\n" +
                 "  [] -> empiler, dépiler l'état de la tortue\n" +
                 "  () -> déclarer le début ou la fin d'une nouvelle itération\n" +
                 "  / -> enlever un symbole\n" +

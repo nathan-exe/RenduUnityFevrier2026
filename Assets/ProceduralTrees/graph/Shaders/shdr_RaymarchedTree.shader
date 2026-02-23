@@ -10,6 +10,7 @@ Shader "Vegetation/RaymarchedTree"
         _threshold ("Raymarch hit threshold", Float) = .1
         _maxIterations ("max Iterations", Int) = 10
         _smoothing ("smoothing", Float) = 1
+        
     }
 
     // The SubShader block containing the Shader code.
@@ -114,7 +115,7 @@ Shader "Vegetation/RaymarchedTree"
                
                 return t_far; // if we made it here, there was an intersection - YAY
 
-                //TODO : take scene depth into account.
+
             }
             
             bool is_in_bounding_box(float3 pos,float3 boxMin, float3 boxMax){ 
@@ -161,6 +162,8 @@ Shader "Vegetation/RaymarchedTree"
             {
                 float distance;
                 int segID;
+                int secondClosestSegID;
+                float smoothFactor;
             };
 
             //retourne la distance signée avec l'ensemble des branches de l'arbre
@@ -171,12 +174,20 @@ Shader "Vegetation/RaymarchedTree"
                 
                 SceneHit hit;
                 hit.distance = 1000000;
+                hit.segID = 0;
                 for (int i = 0; i<_segmentCount;i++)
                 {
                     SdfResult result = SegmentSDF(worldpos,_segments[i]);
-                    if (hit.distance > result.sdf)
-                        hit.segID = i;
+                    float oldDistance = hit.distance;
+                    
+                    
                     hit.distance = smooth_min(hit.distance,result.sdf,_smoothing*_segments[i].radius);
+                    if (oldDistance > result.sdf)
+                    {
+                        hit.smoothFactor =  abs(hit.distance-result.sdf)/(_smoothing*_segments[i].radius);
+                        hit.secondClosestSegID = hit.segID;
+                        hit.segID = i;
+                    }
                 }
                 
                 return hit;
@@ -242,20 +253,29 @@ Shader "Vegetation/RaymarchedTree"
 
                         //compute normal
                         Segment hitSegment = _segments[sceneHit.segID];
-                        float3 h =  SegmentSDF(samplePoint,hitSegment).h;
-                        float3 normal = normalize(samplePoint-h);
-
+                        SdfResult h =  SegmentSDF(samplePoint,hitSegment);
+                        SdfResult h2 =  SegmentSDF(samplePoint,_segments[sceneHit.secondClosestSegID]);
+                        
+                        //float3 normal = normalize(samplePoint-h.h);
+                        float3 normal = normalize(samplePoint-lerp(h.h,h2.h,sceneHit.smoothFactor));
+                        
                         //lightning
                         float lambert = saturate(dot(normal,_MainLightPosition));
-                        float specular = pow(saturate(dot(reflect(_MainLightPosition, normal), rayDirection)), 5);
+                        float specular = pow(saturate(dot(reflect(_MainLightPosition, normal), rayDirection)), 2);
                         float fresnel = pow(saturate(dot(reflect(rayDirection, normal), rayDirection)), 1.4);
-                        float3 color = lerp(unity_AmbientSky*.5 * (segId01*.5+.5),_MainLightColor,lambert) + specular * (fresnel*.5+05 * _MainLightColor) + fresnel * unity_AmbientSky;
+                        float3 color = lerp(unity_AmbientSky*.5 ,_MainLightColor,lambert) + specular * (fresnel*.5+05 * _MainLightColor) + fresnel * unity_AmbientSky;
 
                         //write to depth
-                        float distanceToCamera = length(samplePoint - GetCameraPositionWS());
-                        float linearDepth = (distanceToCamera - _ProjectionParams.y) / (_ProjectionParams.z - _ProjectionParams.y);
-                        output.depth = LinearDepthToRawDepth(linearDepth);
+                        float4 linearDepth = TransformWorldToHClip(samplePoint);
+                        float depth = linearDepth.z / linearDepth.w;
+                        output.depth = depth;
 
+
+#if UNITY_REVERSED_Z
+	// Reversed, **1** at the near plane, **0** at the far plane
+	//output.depth = 1.0f - output.depth;
+#endif
+                        
                         output.color = float4(color,1);
                         return output;
                         

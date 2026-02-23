@@ -27,7 +27,7 @@ Material:
     - _pixelsPerUnit: 10
     m_Floats:
     - _maxIterations: 30
-    - _smoothing: 0.001
+    - _smoothing: 0.3
     - _stepSize: 0.1
     - _threshold: 0.0075
     m_Colors:
