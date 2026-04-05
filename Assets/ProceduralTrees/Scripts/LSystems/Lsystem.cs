@@ -35,12 +35,12 @@ namespace NathanTazi
 
         public string Simulate(int iterations)
         {
-            Debug.Log("== Lsystem simulation ==");
-            Debug.Log("  axiom :  "+Symbols);
+            //Debug.Log("== Lsystem simulation ==");
+            //Debug.Log("  axiom :  "+Symbols);
             for (int i = 0; i < iterations; i++)
             {
                 ApplyRules();
-                Debug.Log("  i : "+i.ToString() + ", symbols : "+Symbols);
+                //Debug.Log("  i : "+i.ToString() + ", symbols : "+Symbols);
             }
             return Symbols;
         }

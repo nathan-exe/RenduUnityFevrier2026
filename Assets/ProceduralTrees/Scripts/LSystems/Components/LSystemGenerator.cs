@@ -16,19 +16,24 @@ namespace NathanTazi
     
         [Header("Generation")] 
         [SerializeField] protected string _axiom;//l'étape 0 de la simulation.
-        [SerializeField] protected int iterations = 5;
+        [SerializeField][Range(0,1)] protected float totalGrowth;
+        [SerializeField][Range(0,6)] protected int iterations = 5;
         [SerializeField] protected float bbMargin = .1f;
     
         [ContextMenu("Refresh graph")]
         public void RefreshGraph()
         {
             print("Refreshing graph");
+            
             lsystem.Symbols = _axiom;
             lsystem._rules.Refresh();
-            lsystem.Simulate(iterations);
+
+            lsystem.growthThisStep = (totalGrowth * iterations)%1f;
+            lsystem.Simulate(Mathf.CeilToInt(iterations*totalGrowth));
+            
             Graph = lsystem.ComputeGraph();
             BoundingBox = Graph.GetBoundingBox(bbMargin);
-        
+            
             gameObject.SendMessageUpwards("OnLSystemRegenerated",SendMessageOptions.DontRequireReceiver);
         }
     

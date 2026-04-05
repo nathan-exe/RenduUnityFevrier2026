@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 
@@ -31,7 +32,7 @@ namespace NathanTazi
         [SerializeField] public Vector2 RollAngleRange;
         [SerializeField] [Range(0,1)] public float verticalAngleBiasStrength;
         [SerializeField] public float baseRadius;
-        [SerializeField][Range(0,1)] public float growth;
+        [SerializeField][Range(0,1)][FormerlySerializedAs("growth")] public float growthThisStep;
         
         [Header("Algorithm")]
         [SerializeField] public int seed;
@@ -92,10 +93,11 @@ namespace NathanTazi
         
             int i = 0;
             int lastSymbolID = Symbols.Length;
+            
             foreach (char symbol in Symbols)
             {
-                float actualStepSize = (StepSize.x + Random.value * StepSize.y ) * (isNewSegment ? growth : 1);
-                float age = isNewSegment ? growth : 1f;
+                
+                float age = isNewSegment ? growthThisStep : 1f;
                 bool foundSymbol = true;
                 switch (symbol)
                 {
@@ -103,14 +105,12 @@ namespace NathanTazi
                     case 'f': {
                         if (!enableBranchReduction||(i == lastSymbolID || i==0 || PreviousNonParenthesisCharacter(Symbols,i)!='f'))
                             plantStart = turtle.point;
-                        //turtle.yaw += Random.Range(-angleRandomness,angleRandomness);
-                        //turtle.pitch += Random.Range(-angleRandomness,angleRandomness);
-                        //turtle.roll += Random.Range(-angleRandomness,angleRandomness);
                         turtle.transform = turtle.transform * Matrix4x4.Rotate(
                             Quaternion.Euler(Random.Range(-angleRandomness, angleRandomness),
                                 Random.Range(-angleRandomness, angleRandomness),
                                 Random.Range(-angleRandomness, angleRandomness)));
                         
+                        float actualStepSize = (StepSize.x + Random.value * StepSize.y ) * (isNewSegment ? growthThisStep : 1);
                         turtle.point += turtle.direction * actualStepSize ;
                         if (!enableBranchReduction||(i == lastSymbolID || (NextNonParenthesisCharacter(Symbols,i) != 'f' )))
                             //&& !(i < lastSymbolID-1 && (Symbols[i + 1] == '(' || Symbols[i + 1] == '(')&&Symbols[i + 2] == 'f' ) ))
@@ -124,7 +124,7 @@ namespace NathanTazi
                     // 'x' : go forward and draw leaf
                     case 'x': {
                         Vector3 a = turtle.point;
-                        //turtle.angle += Random.Range(-angleRandomness,angleRandomness);
+                        float actualStepSize = (StepSize.x + Random.value * StepSize.y ) * (isNewSegment ? growthThisStep : 1);
                         turtle.point += turtle.direction * actualStepSize;
                         Vector3 b = turtle.point;
                         plantGraph.segments.Add(new Segment(a, b, turtle.radius,age));
