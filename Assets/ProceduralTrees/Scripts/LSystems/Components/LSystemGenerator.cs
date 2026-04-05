@@ -26,7 +26,7 @@ namespace NathanTazi
             lsystem.Symbols = _axiom;
             lsystem._rules.Refresh();
             lsystem.Simulate(iterations);
-            Graph = lsystem.GetGraph();
+            Graph = lsystem.ComputeGraph();
             BoundingBox = Graph.GetBoundingBox(bbMargin);
         
             gameObject.SendMessageUpwards("OnLSystemRegenerated",SendMessageOptions.DontRequireReceiver);

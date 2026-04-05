@@ -45,7 +45,7 @@ namespace NathanTazi
             return Symbols;
         }
 
-        public abstract PlantGraph GetGraph();
+        public abstract PlantGraph ComputeGraph();
 
         //constructors
         public Lsystem(string axiom)

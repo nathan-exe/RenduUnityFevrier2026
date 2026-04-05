@@ -285,7 +285,7 @@ Shader "Vegetation/RaymarchedTree"
                         //return lerp( float4(1,0,0,1) , float4(color,1),_segments[sceneHit.segID].age);
                     }
                     
-                    rayLength += sceneHit.distance + _threshold*.0;
+                    rayLength += sceneHit.distance;
                     clip((rayLength < maxRayLength)-.1);
                 }
 

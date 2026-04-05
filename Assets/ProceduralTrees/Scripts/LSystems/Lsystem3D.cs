@@ -76,7 +76,7 @@ namespace NathanTazi
             public float radius;
         }
         
-        public override PlantGraph GetGraph()
+        public override PlantGraph ComputeGraph()
         {
             Random.InitState(seed);
             Turtle turtle = new Turtle();
