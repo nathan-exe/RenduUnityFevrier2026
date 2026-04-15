@@ -7,8 +7,6 @@ using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.Networking;
-using UnityEngine.Rendering;
 
 namespace Chat
 {

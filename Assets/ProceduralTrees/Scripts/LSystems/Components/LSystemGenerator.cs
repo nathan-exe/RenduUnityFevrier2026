@@ -20,15 +20,18 @@ namespace NathanTazi
         [SerializeField][Range(0,6)] protected int iterations = 5;
         [SerializeField] protected float bbMargin = .1f;
     
+        /// <summary>
+        /// recalcule toute la structure de l'arbre
+        /// </summary>
         [ContextMenu("Refresh graph")]
         public void RefreshGraph()
         {
             print("Refreshing graph");
             
             lsystem.Symbols = _axiom;
-            lsystem._rules.Refresh();
+            lsystem._rules.ParseRulesDictionnary();
 
-            lsystem.growthThisStep = (totalGrowth * iterations)%1f;
+            lsystem.growthThisStep = (totalGrowth * iterations-.0001f)%1f+.0001f;
             lsystem.Simulate(Mathf.CeilToInt(iterations*totalGrowth));
             
             Graph = lsystem.ComputeGraph();
@@ -102,6 +105,7 @@ public class LsystemGeneratorEditor : Editor
             GUILayout.Space(10);
             GUILayout.Label("Segment count : " + t.Graph.segments.Count);
             GUILayout.Label("Leaf count : " + t.Graph.leaves.Count);
+            GUILayout.Label("Lsystem symbol count : " + t.lsystem.Symbols.Length);
         }
         
     }

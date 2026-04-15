@@ -30,7 +30,7 @@ namespace NathanTazi
         {
             GenerateBoundingBox(out Tuple<Vector3, Vector3> worldBounds);
             UpdateSegmentsBuffer();
-            UpdateMaterialValues(worldBounds);
+            UpdateMaterialValues(worldBounds); //generator.BoundingBox);
         }
 
         /// <summary>

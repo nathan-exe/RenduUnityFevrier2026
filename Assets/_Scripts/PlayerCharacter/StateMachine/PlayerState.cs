@@ -1,4 +1,3 @@
-using System;
 using _scripts.PlayerCharacter;
 using _Scripts.StateMachine;
 using UnityEngine;

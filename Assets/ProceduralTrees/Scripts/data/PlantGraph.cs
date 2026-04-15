@@ -11,13 +11,13 @@ namespace NathanTazi
 
         public struct Leaf
         {
-            public Vector3 position;
+            public Vector3 localPosition;
             public Matrix4x4 branchTransform;
             public float size;
 
-            public Leaf(Vector3 position, Matrix4x4 branchTransform, float size)
+            public Leaf(Vector3 localPosition, Matrix4x4 branchTransform, float size)
             {
-                this.position = position;
+                this.localPosition = localPosition;
                 this.branchTransform = branchTransform;
                 this.size = size;
             }

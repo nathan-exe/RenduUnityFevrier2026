@@ -1,7 +1,6 @@
 using System;
 using _Scripts.StateMachine;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace _scripts.PlayerCharacter.StateMachine.States
 {

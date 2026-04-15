@@ -1,5 +1,3 @@
-using System;
-using System.Dynamic;
 using _scripts.PlayerCharacter;
 using _scripts.PlayerCharacter.StateMachine.States;
 using _Scripts.StateMachine;

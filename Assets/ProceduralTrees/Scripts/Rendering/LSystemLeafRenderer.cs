@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
 using NathanTazi;
-using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 
@@ -39,7 +37,7 @@ namespace NathanTazi
 
         private void UpdateLeaf(Transform leaf,PlantGraph.Leaf info)
         {
-            leaf.transform.position = transform.TransformPoint(info.position);
+            leaf.transform.position = transform.TransformPoint(info.localPosition);
             leaf.transform.rotation = 
                 Quaternion.Slerp(
                     Quaternion.LookRotation(info.branchTransform*Vector3.forward,info.branchTransform*Vector3.up),

@@ -12,5 +12,10 @@ namespace _Scripts.Extensions
             h = h % 1f;
             return Color.HSVToRGB(h,s,v);
         }
+
+        public static Color WithAlpha(this Color color, float alpha)
+        {
+            return new Color(color.r, color.g, color.b, alpha);
+        }
     }
 }

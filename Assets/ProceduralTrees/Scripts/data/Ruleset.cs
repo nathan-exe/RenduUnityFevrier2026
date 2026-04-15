@@ -10,7 +10,7 @@ namespace NathanTazi
     {
         [SerializeField] private List<string> rules;
 
-        public Dictionary<char,string> Refresh()
+        public Dictionary<char,string> ParseRulesDictionnary()
         {
             Clear();
             foreach (var input in rules)

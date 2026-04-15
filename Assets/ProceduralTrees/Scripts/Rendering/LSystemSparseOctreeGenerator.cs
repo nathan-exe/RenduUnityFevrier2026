@@ -1,9 +1,5 @@
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using NathanTazi;
-using Unity.VisualScripting;
+using _Scripts.Extensions;
 using UnityEditor;
 using UnityEngine;
 
@@ -87,7 +83,7 @@ namespace NathanTazi
                         //print("fisrt branch index of leaf : " + firstBranchIndex);
                         Gizmos.color = Color.Lerp(Color.green, Color.red,
                             (float)branchCount / _maxSegmentsPerLeaf);
-                        Gizmos.color = Gizmos.color.WithAlpha((float)recIndex / MaxSubdivisionLevels/MaxSubdivisionLevels);
+                        Gizmos.color = Gizmos.color.WithAlpha( (float)recIndex / MaxSubdivisionLevels/MaxSubdivisionLevels);
 
                     }
                     

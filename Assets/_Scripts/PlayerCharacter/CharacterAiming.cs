@@ -1,4 +1,3 @@
-using System;
 using _scripts.PlayerCharacter;
 using Unity.Mathematics;
 using UnityEngine;

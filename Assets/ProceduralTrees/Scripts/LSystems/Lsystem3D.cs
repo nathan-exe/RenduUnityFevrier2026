@@ -77,6 +77,10 @@ namespace NathanTazi
             public float radius;
         }
         
+        /// <summary>
+        /// computes a local space graph structure from the simulated set of symbols. 
+        /// </summary>
+        /// <returns></returns>
         public override PlantGraph ComputeGraph()
         {
             Random.InitState(seed);
