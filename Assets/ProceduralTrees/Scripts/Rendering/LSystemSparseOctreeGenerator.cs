@@ -81,7 +81,7 @@ namespace NathanTazi
                         int j;
                         int firstBranchIndex = Node.GetArrayIndexForChildValue(octree.nodes[nodeIndex][i]);
                         
-                        for (j = firstBranchIndex; octree.indexBuffer[j] != Node.NULL_INDEX_VALUE && i < octree.indexBuffer.Count; j++) ;
+                        for (j = firstBranchIndex; octree.leafDataIndexBuffer[j] != Node.NULL_INDEX_VALUE && i < octree.leafDataIndexBuffer.Count; j++) ;
                         
                         int branchCount = j - firstBranchIndex; //-1 ?
                         //print("fisrt branch index of leaf : " + firstBranchIndex);
@@ -146,10 +146,10 @@ namespace NathanTazi
                         //make it a leaf that points to a segment of data indices in the index buffer :
 
                         //populate index buffer and add terminaison value
-                        ushort indexSegmentStart = (ushort)octree.indexBuffer.Count;
+                        ushort indexSegmentStart = (ushort)octree.leafDataIndexBuffer.Count;
                         foreach (ushort index in subtreeIndices)
-                            octree.indexBuffer.Add(index);
-                        octree.indexBuffer.Add(Node.NULL_INDEX_VALUE);
+                            octree.leafDataIndexBuffer.Add(index);
+                        octree.leafDataIndexBuffer.Add(Node.NULL_INDEX_VALUE);
 
                         //set child value to the segment's start index
 
@@ -303,7 +303,7 @@ namespace NathanTazi
         public void PrintIndexBuffer()
         {
             string s = "";
-            foreach (ushort index in octree.indexBuffer)
+            foreach (ushort index in octree.leafDataIndexBuffer)
             {
                 s += index + " \n";
             }
@@ -321,13 +321,13 @@ namespace NathanTazi
         {
             LSystemSparseOctreeGenerator t = (LSystemSparseOctreeGenerator)target;
             base.OnInspectorGUI();
-            GUILayout.Label("index buffer length : " + t.octree.indexBuffer.Count);
+            GUILayout.Label("index buffer length : " + t.octree.leafDataIndexBuffer.Count);
             GUILayout.Label("data length : " + t.octree.data.Count);
             GUILayout.Label("node count : " + t.octree.nodes.Count);
             GUILayout.Space(2);
             GUILayout.Label("total size in bytes : " +
                             (t.octree.nodes.Count * sizeof(ushort)*8
-                            + t.octree.indexBuffer.Count * sizeof(ushort)
+                            + t.octree.leafDataIndexBuffer.Count * sizeof(ushort)
                             + t.octree.data.Count * sizeof(float)*5));
         }
     }

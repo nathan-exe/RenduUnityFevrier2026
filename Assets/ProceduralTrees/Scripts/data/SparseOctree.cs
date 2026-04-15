@@ -22,7 +22,7 @@ namespace NathanTazi
         /// |seg021, seg115, seg237, ffffffff, seg005, seg108, ffffffff, seg044, seg142, seg238, seg311, ffffffff, ... |
         /// |          octree leaf 0         |      octree leaf 1      |              octree leaf 2              | ... |
         /// </summary>
-        public List<ushort> indexBuffer = new();
+        public List<ushort> leafDataIndexBuffer = new();
 
         public List<Node> nodes = new();
 
@@ -31,7 +31,7 @@ namespace NathanTazi
         public void Clear()
         {
             data.Clear();
-            indexBuffer.Clear();
+            leafDataIndexBuffer.Clear();
             nodes.Clear();
         }
 
