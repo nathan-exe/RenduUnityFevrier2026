@@ -18,8 +18,8 @@ namespace _scripts.PlayerCharacter.StateMachine.States
         {
             //compute target velocity
             Vector3 targetVelocity = 
-                ctx.inputs.movementInput.Value.x*transform.right 
-                + ctx.inputs.movementInput.Value.y * transform.forward; 
+                ctx.inputs.movementInput.x*transform.right 
+                + ctx.inputs.movementInput.y * transform.forward; 
             targetVelocity *= _airSpeed;
             
             //apply movement

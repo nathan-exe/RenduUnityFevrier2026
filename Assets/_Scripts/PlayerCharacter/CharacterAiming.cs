@@ -24,13 +24,13 @@ public class CharacterAiming : MonoBehaviour
 
     private void LateUpdate()
     {
-        _cameraRoot.Rotate(_sensitivity* _character.inputs.aimInput.Value.y * Vector3.right,Space.Self);
-            angle = Mathf.Clamp((angle + _sensitivity  * _character.inputs.aimInput.Value.y), -90,90);
+        _cameraRoot.Rotate(_sensitivity* _character.inputs.aimInput.y * Vector3.right,Space.Self);
+            angle = Mathf.Clamp((angle + _sensitivity  * _character.inputs.aimInput.y), -90,90);
         _cameraRoot.transform.localEulerAngles = angle * Vector3.right;
     }
 
     void FixedUpdate()
     {
-        _rigidbody.MoveRotation(_rigidbody.rotation * quaternion.RotateY( _sensitivity * _character.inputs.aimInput.Value.x * Mathf.Deg2Rad));
+        _rigidbody.MoveRotation(_rigidbody.rotation * quaternion.RotateY( _sensitivity * _character.inputs.aimInput.x * Mathf.Deg2Rad));
     }
 }

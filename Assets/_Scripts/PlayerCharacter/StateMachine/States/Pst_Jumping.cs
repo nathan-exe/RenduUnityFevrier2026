@@ -35,7 +35,7 @@ namespace _scripts.PlayerCharacter.StateMachine.States
             ctx.physics.SetVelocity(new Vector3(ctx.physics.Velocity.x, Mathf.Max( ctx.physics.Velocity.y,0), ctx.physics.Velocity.z));
             
             //align velocity with input direction
-            Vector3 movementInputws = transform.TransformDirection(Vector3.ClampMagnitude(new Vector3(ctx.inputs.movementInput.Value.x, 0, ctx.inputs.movementInput.Value.y), 1));
+            Vector3 movementInputws = transform.TransformDirection(Vector3.ClampMagnitude(new Vector3(ctx.inputs.movementInput.x, 0, ctx.inputs.movementInput.y), 1));
             ctx.physics.SetVelocity(
                 Vector3.Lerp(ctx.physics.Velocity, movementInputws * ctx.physics.Velocity.magnitude,_jumpDirectionResponsivness));
             

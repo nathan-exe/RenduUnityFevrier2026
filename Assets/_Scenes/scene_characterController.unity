@@ -19929,7 +19929,9 @@ PrefabInstance:
       propertyPath: m_Name
       value: PlayerCharacter
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 6453531417173646804, guid: 44dfda35623467a4b86a65024c2348c8, type: 3}
+    - {fileID: 2231056354388450407, guid: 44dfda35623467a4b86a65024c2348c8, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -67345,7 +67347,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1099062625
 MonoBehaviour:
   m_ObjectHideFlags: 0

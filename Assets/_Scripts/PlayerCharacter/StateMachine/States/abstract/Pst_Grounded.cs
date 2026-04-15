@@ -19,7 +19,7 @@ namespace _scripts.PlayerCharacter.StateMachine.States
                 return Sm.s_Jumping;
             
             //idle if no input
-            if (ctx.inputs.movementInput.Value == Vector2.zero)
+            if (ctx.inputs.movementInput == Vector2.zero)
                 return Sm.s_Idle;
             
             return Sm.s_Walking;

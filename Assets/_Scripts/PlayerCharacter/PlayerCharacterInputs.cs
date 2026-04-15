@@ -1,5 +1,4 @@
 using Chat;
-using Unity.Netcode;
 using UnityEditor;
 using UnityEngine;
 
@@ -7,11 +6,11 @@ using UnityEngine;
 /// cette classe contient les inputs du joueur et est utilisée dans les states du personnage.
 /// </summary>
 //todo : new input system
-public class PlayerCharacterInputs : NetworkBehaviour
+public class PlayerCharacterInputs : MonoBehaviour
 {
-    [HideInInspector] public NetworkVariable<Vector2> movementInput = new(Vector2.zero, NetworkVariableReadPermission.Everyone,NetworkVariableWritePermission.Owner);
-    [HideInInspector] public NetworkVariable<Vector2> aimInput = new(Vector2.zero, NetworkVariableReadPermission.Everyone,NetworkVariableWritePermission.Owner);
-    [HideInInspector] public NetworkVariable<bool> isHoldingRunKey { get; private set; } = new(false, NetworkVariableReadPermission.Everyone,NetworkVariableWritePermission.Owner);
+    [HideInInspector] public Vector2 movementInput = Vector2.zero;
+    [HideInInspector] public Vector2 aimInput = Vector2.zero;
+    [HideInInspector] public bool isHoldingRunKey { get; private set; } = false;
 
     [Header("Settings")]
     [SerializeField] private float _aimSmoothingTime = .1f;
@@ -34,7 +33,6 @@ public class PlayerCharacterInputs : NetworkBehaviour
     
     void Update()
     {
-        if (!IsOwner) return;
         
         //chat
         if (Input.GetKeyDown(KeyCode.Mouse0) || Input.GetKeyDown(KeyCode.Escape))
@@ -53,11 +51,11 @@ public class PlayerCharacterInputs : NetworkBehaviour
         }
 
         //movement
-        movementInput.Value = new Vector2(Input.GetAxis("Horizontal"),Input.GetAxis("Vertical")).normalized;
+        movementInput = new Vector2(Input.GetAxis("Horizontal"),Input.GetAxis("Vertical")).normalized;
         
         //aim
-        aimInput.Value = Vector2.SmoothDamp(
-            aimInput.Value,
+        aimInput = Vector2.SmoothDamp(
+            aimInput,
             new Vector2(Input.mousePositionDelta.x/(float)Screen.height,-Input.mousePositionDelta.y/(float)Screen.height),
             ref aimVel,
             _aimSmoothingTime);
@@ -73,15 +71,15 @@ public class PlayerCharacterInputs : NetworkBehaviour
         _jumpKeyBuffered &= Time.time - _lastJumpKeyPressTime <= _jumpBufferingDuration && IsHoldingJumpKey;
         
         //run
-        isHoldingRunKey.Value = Input.GetKey(KeyCode.LeftShift);
+        isHoldingRunKey = Input.GetKey(KeyCode.LeftShift);
         
         
     }
 
     public void Clear()
     {
-        movementInput.Value = Vector2.zero;
-        aimInput.Value = Vector2.zero;
+        movementInput = Vector2.zero;
+        aimInput = Vector2.zero;
         IsHoldingJumpKey = false;
         _jumpKeyBuffered = false;
     }
@@ -95,8 +93,8 @@ public class PlayerCharacterInputsEditor : Editor
     {
         base.OnInspectorGUI();
         PlayerCharacterInputs i = target as PlayerCharacterInputs;
-        GUILayout.Label($"Movement Input : {i.movementInput.Value.x}, {i.movementInput.Value.y}");
-        GUILayout.Label($"Aim Input : {i.aimInput.Value.x}, {i.aimInput.Value.y}");
+        GUILayout.Label($"Movement Input : {i.movementInput.x}, {i.movementInput.y}");
+        GUILayout.Label($"Aim Input : {i.aimInput.x}, {i.aimInput.y}");
     }
 }
 #endif

@@ -11,7 +11,7 @@ namespace _scripts.PlayerCharacter.StateMachine.States
         [SerializeField] float _groundFriction;
         public override StateBase<PlayerCharacter> FindNextState(PlayerCharacter ctx)
         {
-            if (ctx.inputs.movementInput.Value != Vector2.zero)
+            if (ctx.inputs.movementInput != Vector2.zero)
                 return Sm.s_Walking;
             return base.FindNextState(ctx);
         }
