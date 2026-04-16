@@ -22470,7 +22470,7 @@ GameObject:
   - component: {fileID: 396417764}
   - component: {fileID: 396417768}
   m_Layer: 0
-  m_Name: procedural tree (3)
+  m_Name: Arbre 2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -31318,7 +31318,7 @@ GameObject:
   - component: {fileID: 545857088}
   - component: {fileID: 545857087}
   m_Layer: 0
-  m_Name: procedural tree (2)
+  m_Name: Arbre 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -67342,7 +67342,7 @@ GameObject:
   - component: {fileID: 1099062626}
   - component: {fileID: 1099062625}
   m_Layer: 0
-  m_Name: procedural tree (5)
+  m_Name: Arbre 3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -73576,7 +73576,7 @@ GameObject:
   - component: {fileID: 1212146234}
   - component: {fileID: 1212146233}
   m_Layer: 0
-  m_Name: procedural tree (4)
+  m_Name: Arbre 0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
