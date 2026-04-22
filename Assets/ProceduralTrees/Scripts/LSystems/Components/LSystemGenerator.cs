@@ -12,7 +12,7 @@ namespace NathanTazi
     {
         [SerializeField] public Lsystem3D lsystem;
         public PlantGraph Graph;
-        public Tuple<Vector3, Vector3> BoundingBox;
+        public Tuple<Vector3, Vector3> BoundingBoxLs;
     
         [Header("Generation")] 
         [SerializeField] protected string _axiom;//l'étape 0 de la simulation.
@@ -35,7 +35,7 @@ namespace NathanTazi
             lsystem.Simulate(Mathf.CeilToInt(iterations*totalGrowth));
             
             Graph = lsystem.ComputeGraph();
-            BoundingBox = Graph.GetBoundingBox(bbMargin);
+            BoundingBoxLs = Graph.GetBoundingBox(bbMargin);
             
             gameObject.SendMessageUpwards("OnLSystemRegenerated",SendMessageOptions.DontRequireReceiver);
         }

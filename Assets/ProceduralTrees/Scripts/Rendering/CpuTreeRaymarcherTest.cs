@@ -104,8 +104,8 @@ public class CpuTreeRaymarcherTest : MonoBehaviour
         float sdf = sdfTree(_sparseOctreeGenerator.octree
             , transform.position
             , 0
-            ,_lSystemGenerator.BoundingBox.Item1
-            ,_lSystemGenerator.BoundingBox.Item2);
+            ,_lSystemGenerator.BoundingBoxLs.Item1
+            ,_lSystemGenerator.BoundingBoxLs.Item2);
         //Gizmos.DrawWireSphere(transform.position,sdf);
     }
 }

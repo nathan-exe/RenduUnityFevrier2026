@@ -3,8 +3,8 @@ Shader "Vegetation/RaymarchedTree"
     // The Properties block of the Unity shader.
     Properties 
     { 
-         [HideInInspector] _boundingBoxCenter ("_boundingBoxCenter", Vector) = (.25, .5, .5, 1)
-         [HideInInspector] _boundingBoxSize  ("_boundingBoxSize", Vector) = (.25, .5, .5, 1)
+         [HideInInspector] _boundingBoxCenter_ls ("_boundingBoxCenter_ls", Vector) = (.25, .5, .5, 1)
+         [HideInInspector] _boundingBoxSize_ls  ("_boundingBoxSize_ls", Vector) = (.25, .5, .5, 1)
 
         //raymarching
         _threshold ("Raymarch hit threshold", Float) = .1
@@ -52,16 +52,10 @@ Shader "Vegetation/RaymarchedTree"
                 //vertex position in object space
                 float4 positionOS   : POSITION;
             };
-
-            struct V2f
-            {
-                float4 positionHCS  : SV_POSITION;
-                float4 worldPos  : TEXCOORD0;
-            };
-
+            
             //bounding box
-            float3 _boundingBoxCenter;
-            float3 _boundingBoxSize;
+            float3 _boundingBoxCenter_ls;
+            float3 _boundingBoxSize_ls;
 
             //raymarching
             float _threshold;
@@ -69,9 +63,9 @@ Shader "Vegetation/RaymarchedTree"
             float _smoothing;
 
             //scene
-            StructuredBuffer<Segment> _segments; //todo : binary space partitionning 
+            StructuredBuffer<Segment> _segments_ls; //todo : binary space partitionning 
             int _segmentCount;
-            matrix _treeTransform;
+            matrix _treeTransform_ls_to_ws;
 
             //material
             float3 _albedo;
@@ -141,27 +135,25 @@ Shader "Vegetation/RaymarchedTree"
 
             //retourne la distance signée avec un segment épaissis; une capsule
             //https://iquilezles.org/articles/distfunctions/
-            SdfResult SegmentSDF(float3 worldpos,Segment segment)
+            SdfResult SegmentSDF(float3 localPos,Segment segment)
             {
                 SdfResult output;
                 
-                //H = le point M (world pos) projeté sur le segment AB.
+                //H = le point M (local pos) projeté sur le segment AB.
                 // on retourne la distance entre H et M - le rayon de la capsule.
-                float3 A = mul(_treeTransform,float4(segment.a,1));
-                float3 B = mul(_treeTransform,float4(segment.b,1));
-                float3 AM = worldpos - A;
+                float3 A = float4(segment.a,1);
+                float3 B = float4(segment.b,1);
+                float3 AM = localPos - A;
                 float3 AB = B - A;
                 float normeAB = length(AB);
-                //float3 normalizedAB = normalize(ab);
-                //float3 h = segment.a + (dot(normalizedAB,am) * normalizedAB) - worldpos;
-
+                
                 float projectionLength = dot(AB,AM)/(normeAB * normeAB);
                 projectionLength = saturate(projectionLength);
                 float3 H = A + AB*(projectionLength);
 
                 output.t = projectionLength;
                 output.h = H;
-                output.sdf =  length(worldpos - H) - segment.radius;//todo : lerp(radiusA, radiusB, t)
+                output.sdf =  length(localPos - H) - segment.radius;//todo : lerp(radiusA, radiusB, t)
                 return output;
             }
 
@@ -174,7 +166,7 @@ Shader "Vegetation/RaymarchedTree"
             };
 
             //retourne la distance signée avec l'ensemble des branches de l'arbre
-            SceneHit SceneSDF(float3 worldpos)
+            SceneHit SceneSDF(float3 localPos)
             {
                 //todo : octree ou binary space partitionning pour éviter d'itérer à travers tous les segments.
                 //todo : interpolation d'attributs entre les 2 segments les plus proches
@@ -184,14 +176,14 @@ Shader "Vegetation/RaymarchedTree"
                 hit.segID = 0;
                 for (int i = 0; i<_segmentCount;i++)
                 {
-                    SdfResult result = SegmentSDF(worldpos,_segments[i]);
+                    SdfResult result = SegmentSDF(localPos,_segments_ls[i]);
                     float oldDistance = hit.distance;
                     
                     
-                    hit.distance = smooth_min(hit.distance,result.sdf,_smoothing*_segments[i].radius);
+                    hit.distance = smooth_min(hit.distance,result.sdf,_smoothing*_segments_ls[i].radius);
                     if (oldDistance > result.sdf)
                     {
-                        hit.smoothFactor =  abs(hit.distance-result.sdf)/(_smoothing*_segments[i].radius);
+                        hit.smoothFactor =  abs(hit.distance-result.sdf)/(_smoothing*_segments_ls[i].radius);
                         hit.secondClosestSegID = hit.segID;
                         hit.segID = i;
                     }
@@ -203,13 +195,21 @@ Shader "Vegetation/RaymarchedTree"
             
             //== shader functions ==
 
+            struct V2f
+            {
+                float4 positionCS  : SV_POSITION;
+                float4 localPos  : TEXCOORD0;
+                float4 worldPos  : TEXCOORD1;
+            };
+            
             //vertex shader
             V2f vertex(VertexAttributes IN)
             {
                 V2f OUT; 
 
-                OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
+                OUT.positionCS = TransformObjectToHClip(IN.positionOS.xyz);
                 OUT.worldPos = mul(unity_ObjectToWorld,IN.positionOS);
+                OUT.localPos =  mul(Inverse(_treeTransform_ls_to_ws),OUT.worldPos);
                     
                 // Returning the output. 
                 return OUT;
@@ -220,38 +220,40 @@ Shader "Vegetation/RaymarchedTree"
                 half4 color : SV_Target;
                 float depth : SV_Depth;
             };
-
-            float4 ComputeOutputColor()
-            {
-                
-            }
             
             // fragment shader
             fragOutput frag(V2f IN) 
             {
                 fragOutput output;
-
-                
                 
                 //define bounding box
-                float3 boxMin = _boundingBoxCenter - _boundingBoxSize*0.5;
-                float3 boxMax = _boundingBoxCenter + _boundingBoxSize*0.5;
-                float3 bbWorldSize = (boxMax - boxMin);
-                float3 bbInvWorldSize = 1.0/bbWorldSize;
+                // float3 boxMin_ls = _boundingBoxCenter_ls - _boundingBoxSize_ls*0.5;
+                // float3 boxMax_ls = _boundingBoxCenter_ls + _boundingBoxSize_ls*0.5;
+                float3 boxMin_ls = _boundingBoxCenter_ls;
+                float3 boxMax_ls = _boundingBoxSize_ls;
+                float3 bbLocalSize = (boxMax_ls - boxMin_ls);
+                float3 bbInvLocalSize = 1.0/bbLocalSize;
                 
                 //define ray
-                float3 rayOrigin = is_in_bounding_box(_WorldSpaceCameraPos.xyz,boxMin-1,boxMax+1) ? _WorldSpaceCameraPos.xyz : IN.worldPos.xyz;
-                float2 screenPos = mul(unity_WorldToCamera,IN.worldPos.xyz);
+                float3 localCameraPos = mul(Inverse(_treeTransform_ls_to_ws),_WorldSpaceCameraPos);
+                float3 localRayOrigin = is_in_bounding_box(localCameraPos,boxMin_ls-1,boxMax_ls+1) ? localCameraPos : IN.localPos;
                 
-                const float3 rayDirection = -GetWorldSpaceNormalizeViewDir(IN.worldPos.xyz);// normalize(IN.worldPos.xyz- _WorldSpaceCameraPos.xyz );
-                const float maxRayLength = ComputeMaxRayLengthInBoundingBox(rayOrigin,rayDirection,boxMin ,boxMax);
+                const float3 localRayDirection = mul(Inverse(_treeTransform_ls_to_ws),-GetWorldSpaceNormalizeViewDir(IN.worldPos.xyz));// normalize(IN.worldPos.xyz- _WorldSpaceCameraPos.xyz );
+                const float maxRayLength = ComputeMaxRayLengthInBoundingBox(localRayOrigin,localRayDirection,boxMin_ls ,boxMax_ls);
+
+                //debug
+                // output.color = float4(mul(_treeTransform_ls_to_ws, IN.localPos.xyz).xyz,1);
+                // float4 linearDepth = TransformWorldToHClip(mul(_treeTransform_ls_to_ws, float4(IN.localPos.xyz,1)));
+                // output.depth = linearDepth.z / linearDepth.w;
+                // return output;
+
                 
                 float rayLength = 0;
                 //raymarching : on avance le long d'un rayon jusqu'à ce que la distance avec la scène soit quasi nulle.
                 //https://iquilezles.org/articles/raymarchingdf/
                 for (int i =0; i<_maxIterations;i++)
                 {
-                    float3 samplePoint = rayOrigin+rayDirection*rayLength;
+                    float3 samplePoint = localRayOrigin+localRayDirection*rayLength;
                     SceneHit sceneHit = SceneSDF(samplePoint);
 
                     //distance quasi nulle <=> surface touchée
@@ -260,22 +262,22 @@ Shader "Vegetation/RaymarchedTree"
                         //samplePoint = rayOrigin+rayDirection*rayLength;
 
                         //compute normal
-                        Segment hitSegment = _segments[sceneHit.segID];
+                        Segment hitSegment = _segments_ls[sceneHit.segID];
                         SdfResult h =  SegmentSDF(samplePoint,hitSegment);
-                        SdfResult h2 =  SegmentSDF(samplePoint,_segments[sceneHit.secondClosestSegID]);
+                        SdfResult h2 =  SegmentSDF(samplePoint,_segments_ls[sceneHit.secondClosestSegID]);
                         
                         //float3 normal = normalize(samplePoint-h.h);
                         float3 normal = normalize(samplePoint-lerp(h.h,h2.h,sceneHit.smoothFactor));
                         
                         //lightning
                         float lambert = saturate(dot(normal,_MainLightPosition));
-                        float specular = pow(saturate(dot(reflect(_MainLightPosition, normal), rayDirection)), 2);
-                        float fresnel = pow(saturate(dot(reflect(rayDirection, normal), rayDirection)), 1.4);
+                        float specular = pow(saturate(dot(reflect(_MainLightPosition, normal), localRayDirection)), 2);
+                        float fresnel = pow(saturate(dot(reflect(localRayDirection, normal), localRayDirection)), 1.4);
                         float3 light = lerp(unity_AmbientSky *1.5 ,_MainLightColor,lambert) + specular * (_MainLightColor)*.1 + fresnel * unity_AmbientSky;
                         float3 color = _albedo * light;
                         
                         //write to depth
-                        float4 linearDepth = TransformWorldToHClip(samplePoint);
+                        float4 linearDepth = TransformWorldToHClip(mul(_treeTransform_ls_to_ws,float4( samplePoint,1)));
                         float depth = linearDepth.z / linearDepth.w;
                         output.depth = depth;
                         
@@ -286,7 +288,7 @@ Shader "Vegetation/RaymarchedTree"
                     }
                     
                     rayLength += sceneHit.distance;
-                    clip((rayLength < maxRayLength)-.1);
+                    clip((rayLength < maxRayLength)-.5);
                 }
 
                 //nombre max de steps dépassé
@@ -330,13 +332,13 @@ Pass
 
             struct V2f
             {
-                float4 positionHCS  : SV_POSITION;
+                float4 positionCS  : SV_POSITION;
                 float4 worldPos  : TEXCOORD0;
             };
 
             //bounding box
-            float3 _boundingBoxCenter;
-            float3 _boundingBoxSize;
+            float3 _boundingBoxCenter_ls;
+            float3 _boundingBoxSize_ls;
 
             //raymarching
             float _threshold;
@@ -344,9 +346,9 @@ Pass
             float _smoothing;
 
             //scene
-            StructuredBuffer<Segment> _segments; //todo : binary space partitionning 
+            StructuredBuffer<Segment> _segments_ls; //todo : binary space partitionning 
             int _segmentCount;
-            matrix _treeTransform;
+            matrix _treeTransform_ls_to_ws;
             
             float ComputeMaxRayLengthInBoundingBox(float3 origin,float3 direction,float3 boxMin, float3 boxMax){
                 float3 T_1, T_2; // vectors to hold the T-values for every direction
@@ -411,8 +413,8 @@ Pass
                 
                 //H = le point M (world pos) projeté sur le segment AB.
                 // on retourne la distance entre H et M - le rayon de la capsule.
-                float3 A = mul(_treeTransform,float4(segment.a,1));
-                float3 B = mul(_treeTransform,float4(segment.b,1));
+                float3 A = mul(_treeTransform_ls_to_ws,float4(segment.a,1));
+                float3 B = mul(_treeTransform_ls_to_ws,float4(segment.b,1));
                 float3 AM = worldpos - A;
                 float3 AB = B - A;
                 float normeAB = length(AB);
@@ -448,9 +450,9 @@ Pass
                 hit.segID = 0;
                 for (int i = 0; i<_segmentCount;i++)
                 {
-                    if (_segments[i].radius<0.02) continue;
+                    if (_segments_ls[i].radius<0.02) continue;
                     
-                    SdfResult result = SegmentSDF(worldpos,_segments[i]);
+                    SdfResult result = SegmentSDF(worldpos,_segments_ls[i]);
                     float oldDistance = hit.distance;
                     
                     
@@ -472,7 +474,7 @@ Pass
             {
                 V2f OUT; 
 
-                OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
+                OUT.positionCS = TransformObjectToHClip(IN.positionOS.xyz);
                 OUT.worldPos = mul(unity_ObjectToWorld,IN.positionOS);
                     
                 // Returning the output. 
@@ -490,8 +492,8 @@ Pass
                 fragOutput output;
                 
                 //define bounding box
-                float3 boxMin = _boundingBoxCenter - _boundingBoxSize*0.5;
-                float3 boxMax = _boundingBoxCenter + _boundingBoxSize*0.5;
+                float3 boxMin = _boundingBoxCenter_ls - _boundingBoxSize_ls*0.5;
+                float3 boxMax = _boundingBoxCenter_ls + _boundingBoxSize_ls*0.5;
                 float3 bbWorldSize = (boxMax - boxMin);
                 float3 bbInvWorldSize = 1.0/bbWorldSize;
                 
@@ -499,7 +501,7 @@ Pass
                 
                 
                 const float3 rayDirection = normalize(_MainLightPosition.xyz);
-                float3 rayOrigin = IN.worldPos.xyz-rayDirection*(length(_boundingBoxSize));
+                float3 rayOrigin = IN.worldPos.xyz-rayDirection*(length(_boundingBoxSize_ls));
                 const float maxRayLength = ComputeMaxRayLengthInBoundingBox(rayOrigin,rayDirection,boxMin ,boxMax);
                 
                 float rayLength = 0;

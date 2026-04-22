@@ -42,7 +42,7 @@ namespace NathanTazi
             List<ushort> indices = new(octree.data.Count);
             for (ushort i = 0; i < octree.data.Count; i++)
                 indices.Add(i);
-            SplitNodeIntoSubtrees(0, indices, _generator.BoundingBox.Item1, _generator.BoundingBox.Item2);
+            SplitNodeIntoSubtrees(0, indices, _generator.BoundingBoxLs.Item1, _generator.BoundingBoxLs.Item2);
         }
 
         void DrawOctreeNode(int nodeIndex, Vector3 bbMin, Vector3 bbMax, int recIndex = 0)
@@ -292,7 +292,7 @@ namespace NathanTazi
         private void OnDrawGizmos()
         {
             if (octree.Count > 0)
-                DrawOctreeNode(0, _generator.BoundingBox.Item1, _generator.BoundingBox.Item2);
+                DrawOctreeNode(0, _generator.BoundingBoxLs.Item1, _generator.BoundingBoxLs.Item2);
         }
 
         [ContextMenu("Print Index Buffer")]

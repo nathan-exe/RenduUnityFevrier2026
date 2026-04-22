@@ -6,6 +6,12 @@ namespace NathanTazi
     [ExecuteAlways]
     public class LSystemRenderer : MonoBehaviour
     {
+        private static readonly int BoundingBoxCenterLsShaderProperty = Shader.PropertyToID("_boundingBoxCenter_ls");
+        private static readonly int BoundingBoxSizeLsShaderProperty = Shader.PropertyToID("_boundingBoxSize_ls");
+        private static readonly int SegmentsLsShaderProperty = Shader.PropertyToID("_segments_ls");
+        private static readonly int TreeTransformLsToWsShaderProperty = Shader.PropertyToID("_treeTransform_ls_to_ws");
+        private static readonly int SegmentCountShaderProperty = Shader.PropertyToID("_segmentCount");
+
         [SerializeField]
         private LSystemGenerator generator;
 
@@ -28,12 +34,13 @@ namespace NathanTazi
         [ContextMenu("Refresh")]
         public void Setup()
         {
-            GenerateBoundingBox(out Tuple<Vector3, Vector3> worldBounds);
+            GenerateBoundingBox();
             UpdateSegmentsBuffer();
-            UpdateMaterialValues(worldBounds); //generator.BoundingBox);
+            UpdateMaterialValues();
         }
 
         /// <summary>
+
         /// génère un buffer contenant une liste de segments définis par deux points et un rayon.
         /// </summary>
         private void UpdateSegmentsBuffer()
@@ -47,21 +54,19 @@ namespace NathanTazi
         /// <summary>
         /// fait spawn un cube en 3D qui représente la bounding box de la plante.
         /// </summary>
-        /// <param name="worldBounds">bb center, bb size</param>
-        void GenerateBoundingBox(out Tuple<Vector3, Vector3> worldBounds)
+        void GenerateBoundingBox()
         {
             if (cube == null)
                 cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
             
-            Vector3 min = transform.TransformPoint(generator.BoundingBox.Item1);
-            Vector3 max = transform.TransformPoint(generator.BoundingBox.Item2);
+            Vector3 min = transform.TransformPoint(generator.BoundingBoxLs.Item1);
+            Vector3 max = transform.TransformPoint(generator.BoundingBoxLs.Item2);
         
             cube.transform.parent = null;
             cube.name = "BoundingBox";
             cube.transform.localRotation = Quaternion.identity;
             cube.transform.localScale = (max - min);
             cube.transform.localPosition = (min + max)*.5f;
-            worldBounds = new Tuple<Vector3, Vector3>(cube.transform.localPosition,cube.transform.localScale);
             cube.transform.SetParent(transform,true);
         }
     
@@ -69,14 +74,14 @@ namespace NathanTazi
         /// Envoie toutes la structure de l'arbre au shader via un material property block.
         /// </summary>
         /// <param name="bounds"></param>
-        void UpdateMaterialValues( Tuple<Vector3, Vector3> bounds)
+        void UpdateMaterialValues()
         {
             MaterialPropertyBlock materialBlock = new MaterialPropertyBlock();
-            materialBlock.SetVector("_boundingBoxCenter", bounds.Item1);
-            materialBlock.SetVector("_boundingBoxSize", bounds.Item2);
-            materialBlock.SetBuffer("_segments", buffer);
-            materialBlock.SetMatrix("_treeTransform", transform.localToWorldMatrix);
-            materialBlock.SetInteger("_segmentCount", generator.Graph.segments.Count);  
+            materialBlock.SetVector(BoundingBoxCenterLsShaderProperty, generator.BoundingBoxLs.Item1);
+            materialBlock.SetVector(BoundingBoxSizeLsShaderProperty, generator.BoundingBoxLs.Item2);
+            materialBlock.SetBuffer(SegmentsLsShaderProperty, buffer);
+            materialBlock.SetMatrix(TreeTransformLsToWsShaderProperty, transform.localToWorldMatrix);
+            materialBlock.SetInteger(SegmentCountShaderProperty, generator.Graph.segments.Count);  
             _meshRenderer.SetPropertyBlock(materialBlock);
         }
 
