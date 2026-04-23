@@ -12,7 +12,7 @@ namespace NathanTazi
     {
         [SerializeField] public Lsystem3D lsystem;
         public PlantGraph Graph;
-        public Tuple<Vector3, Vector3> BoundingBoxLs;
+        public BoundingBox BoundingBoxLs;
     
         [Header("Generation")] 
         [SerializeField] protected string _axiom;//l'étape 0 de la simulation.

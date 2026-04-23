@@ -23,7 +23,7 @@ namespace NathanTazi
             }
         }
         
-        public Tuple<Vector3, Vector3> GetBoundingBox(float margin=3f)
+        public BoundingBox GetBoundingBox(float margin=3f)
         {
             Vector3 min = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
             Vector3 max = new Vector3(float.MinValue, float.MinValue, float.MinValue);
@@ -32,7 +32,7 @@ namespace NathanTazi
                 min = Vector3.Min(min, Vector3.Min(seg.a,seg.b));
                 max = Vector3.Max(max, Vector3.Max(seg.a,seg.b));
             }
-            return new Tuple<Vector3, Vector3>(min-Vector3.one*margin, max+Vector3.one*margin);
+            return new BoundingBox(min-Vector3.one*margin, max+Vector3.one*margin);
         }
     }
 }

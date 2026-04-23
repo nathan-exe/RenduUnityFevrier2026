@@ -6,8 +6,8 @@ namespace NathanTazi
     [ExecuteAlways]
     public class LSystemRenderer : MonoBehaviour
     {
-        private static readonly int BoundingBoxCenterLsShaderProperty = Shader.PropertyToID("_boundingBoxCenter_ls");
-        private static readonly int BoundingBoxSizeLsShaderProperty = Shader.PropertyToID("_boundingBoxSize_ls");
+        private static readonly int BoundingBoxMinLsShaderProperty = Shader.PropertyToID("_boundingBoxMin_ls");
+        private static readonly int BoundingBoxMaxLsShaderProperty = Shader.PropertyToID("_boundingBoxMax_ls");
         private static readonly int SegmentsLsShaderProperty = Shader.PropertyToID("_segments_ls");
         private static readonly int TreeTransformLsToWsShaderProperty = Shader.PropertyToID("_treeTransform_ls_to_ws");
         private static readonly int SegmentCountShaderProperty = Shader.PropertyToID("_segmentCount");
@@ -59,8 +59,8 @@ namespace NathanTazi
             if (cube == null)
                 cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
             
-            Vector3 min = transform.TransformPoint(generator.BoundingBoxLs.Item1);
-            Vector3 max = transform.TransformPoint(generator.BoundingBoxLs.Item2);
+            Vector3 min = transform.TransformPoint(generator.BoundingBoxLs.min);
+            Vector3 max = transform.TransformPoint(generator.BoundingBoxLs.max);
         
             cube.transform.parent = null;
             cube.name = "BoundingBox";
@@ -77,10 +77,13 @@ namespace NathanTazi
         void UpdateMaterialValues()
         {
             MaterialPropertyBlock materialBlock = new MaterialPropertyBlock();
-            materialBlock.SetVector(BoundingBoxCenterLsShaderProperty, generator.BoundingBoxLs.Item1);
-            materialBlock.SetVector(BoundingBoxSizeLsShaderProperty, generator.BoundingBoxLs.Item2);
+            print("bbMin : " +generator.BoundingBoxLs.min);
+            materialBlock.SetVector(BoundingBoxMinLsShaderProperty, generator.BoundingBoxLs.min);
+            materialBlock.SetVector(BoundingBoxMaxLsShaderProperty, generator.BoundingBoxLs.max);
             materialBlock.SetBuffer(SegmentsLsShaderProperty, buffer);
+            print("_treeTransform_ls_to_ws : "+ transform.localToWorldMatrix);
             materialBlock.SetMatrix(TreeTransformLsToWsShaderProperty, transform.localToWorldMatrix);
+            print("shader matrix : " + materialBlock.GetMatrix(TreeTransformLsToWsShaderProperty));
             materialBlock.SetInteger(SegmentCountShaderProperty, generator.Graph.segments.Count);  
             _meshRenderer.SetPropertyBlock(materialBlock);
         }

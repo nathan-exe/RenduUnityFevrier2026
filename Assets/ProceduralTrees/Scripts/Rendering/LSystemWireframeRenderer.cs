@@ -23,9 +23,9 @@ namespace NathanTazi
             }
         
             Gizmos.color = Color.grey;
-            Vector3 min = transform.TransformPoint(generator.BoundingBoxLs.Item1);
-            Vector3 max = transform.TransformPoint(generator.BoundingBoxLs.Item2);
-            Gizmos.DrawWireCube((min + max)*.5f,(max - min));
+            Gizmos.DrawWireCube( 
+                transform.TransformPoint(generator.BoundingBoxLs.center),
+                transform.TransformVector(generator.BoundingBoxLs.size));
         }
 
         void OnDrawGizmos()
