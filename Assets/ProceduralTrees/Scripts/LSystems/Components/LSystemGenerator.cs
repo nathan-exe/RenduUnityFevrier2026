@@ -18,7 +18,6 @@ namespace NathanTazi
         [SerializeField] protected string _axiom;//l'étape 0 de la simulation.
         [SerializeField][Range(0,1)] protected float totalGrowth;
         [SerializeField][Range(0,6)] protected int iterations = 5;
-        [SerializeField] protected float bbMargin = .1f;
     
         /// <summary>
         /// recalcule toute la structure de l'arbre
@@ -35,7 +34,7 @@ namespace NathanTazi
             lsystem.Simulate(Mathf.CeilToInt(iterations*totalGrowth));
             
             Graph = lsystem.ComputeGraph();
-            BoundingBoxLs = Graph.GetBoundingBox(bbMargin);
+            BoundingBoxLs = Graph.GetBoundingBox(lsystem.baseRadius);
             
             gameObject.SendMessageUpwards("OnLSystemRegenerated",SendMessageOptions.DontRequireReceiver);
         }

@@ -113,11 +113,21 @@ public class CpuTreeRaymarcherTest : MonoBehaviour
 
     float AabbSdf(Vector3 point, Vector3 center, Vector3 halfSize)
     {
-        point = point - center;
-        Vector3 q = new Vector3(Mathf.Abs(point.x),Mathf.Abs(point.y),Mathf.Abs(point.z)) - halfSize;
-        return  
-            new Vector3 (Mathf.Max(q.x,0f),Mathf.Max(q.y,0f),Mathf.Max(q.z,0f)).magnitude
-            + Mathf.Min(Mathf.Max(q.x,Mathf.Max(q.y,q.z)),0f);
+        https://www.youtube.com/watch?v=62-pRVZuS5c
+         point = point - center;
+         Vector3 q = new Vector3(
+             Mathf.Abs(point.x),
+             Mathf.Abs(point.y),
+             Mathf.Abs(point.z)) - halfSize;
+         return  
+             new Vector3 (Mathf.Max(q.x,0f),Mathf.Max(q.y,0f),Mathf.Max(q.z,0f)).magnitude
+             + Mathf.Min(Mathf.Max(q.x,Mathf.Max(q.y,q.z)),0f);
+        // Vector3 pointToCenter = center - point;
+        // Vector3 farthestPoint = center + new Vector3(
+        //     halfSize.x * Mathf.Sign(pointToCenter.x),
+        //     halfSize.y * Mathf.Sign(pointToCenter.y),
+        //     halfSize.z * Mathf.Sign(pointToCenter.z));
+
     }
 
     private void OnDrawGizmos()
