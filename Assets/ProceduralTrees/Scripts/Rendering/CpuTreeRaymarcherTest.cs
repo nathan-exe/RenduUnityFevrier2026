@@ -46,26 +46,31 @@ public class CpuTreeRaymarcherTest : MonoBehaviour
                 if (sdf < smallestSdf)
                 {
                     smallestSdf = sdf;
-                    bestNodeIndex =  SparseOctree<Segment>.Node.GetArrayIndexForChildValue(octree.nodes[nodeIndex][i]);
+                    bestNodeIndex =  octree.nodes[nodeIndex][i];
                     bestBB = new BoundingBox(subTreeBbMin, subTreeBbMax);
                 }
             }
         }
         
-         bool pointsToSubtree = SparseOctree<Segment>.Node.ChildIndexValuePointsToSubTree(bestNodeIndex);
-         Gizmos.color = pointsToSubtree? Color.red.WithAlpha(.5f) : Color.aquamarine;
-         Gizmos.DrawWireCube(
-             _lSystemGenerator.transform.TransformPoint( bestBB.center)
-             ,_lSystemGenerator.transform.TransformVector(bestBB.size));
+        bool pointsToSubtree = SparseOctree<Segment>.Node.ChildIndexValuePointsToSubTree(bestNodeIndex);
+        Gizmos.color = pointsToSubtree? Color.orange.WithAlpha(.5f) : Color.red;
+        Gizmos.DrawWireCube(
+            _lSystemGenerator.transform.TransformPoint( bestBB.center)
+         ,_lSystemGenerator.transform.TransformVector(bestBB.size));
 
          
          //descend down the tree
          if (pointsToSubtree)
-             sdfTree(octree, point, bestNodeIndex, bestBB.min, bestBB.max, 0);
+            sdfTree(octree, point, SparseOctree<Segment>.Node.GetArrayIndexForChildValue(bestNodeIndex), bestBB.min, bestBB.max, recIndex+1);
          else
          {//sdf segment array
              
-             int firstBranchIndex = bestNodeIndex;
+             Gizmos.color = Color.red.WithAlpha(.2f);
+             Gizmos.DrawCube(
+                 _lSystemGenerator.transform.TransformPoint( bestBB.center)
+                 ,_lSystemGenerator.transform.TransformVector(bestBB.size));
+             
+             int firstBranchIndex = SparseOctree<Segment>.Node.GetArrayIndexForChildValue(bestNodeIndex);
              //
              Gizmos.color = Color.red;
              for (int j = firstBranchIndex;
@@ -74,11 +79,18 @@ public class CpuTreeRaymarcherTest : MonoBehaviour
                   j++)
              {
                  Segment s = octree.data[octree.leafDataIndexBuffer[j]];
-                 Gizmos.DrawLine(
-                     _lSystemGenerator.transform.TransformPoint(s.a),
-                     _lSystemGenerator.transform.TransformPoint(s.b));
+
+                 Vector3 wsA = _lSystemGenerator.transform.TransformPoint(s.a);
+                 Vector3 wsB = _lSystemGenerator.transform.TransformPoint(s.b);
+
+                 Gizmos.matrix = Matrix4x4.LookAt(wsA,wsB,Vector3.up);
+                 Gizmos.DrawCube(Vector3.forward * Vector3.Distance(wsA,wsB) * .5f,new Vector3(.1f,.1f,Vector3.Distance(wsA,wsB)));
+                 
+                 // Gizmos.DrawLine(
+                 //     _lSystemGenerator.transform.TransformPoint(s.a),
+                 //     _lSystemGenerator.transform.TransformPoint(s.b));
              }
-             
+             Gizmos.matrix = Matrix4x4.identity;
              //
              // int branchCount = j - firstBranchIndex; //-1 ?
              // //print("fisrt branch index of leaf : " + firstBranchIndex);

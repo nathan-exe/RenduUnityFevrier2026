@@ -12,7 +12,7 @@ Shader "Vegetation/RaymarchedTree"
         _smoothing ("smoothing", Float) = 1
         
         //material
-        _albedo ("albedo", Color) = (1,1,1, 1)
+        [HDR]_albedo ("albedo", Color) = (1,1,1, 1)
         
     }
 

@@ -19,10 +19,10 @@ namespace NathanTazi
 
         [Header("Parameters")]
         [SerializeField]
-        public int MaxSubdivisionLevels = 5;
+        public int MaxSubdivisionLevels = 3;
 
         [SerializeField]
-        public int _maxSegmentsPerLeaf = 1;
+        public int _maxSegmentsPerLeaf = 10;
 
         public SparseOctree<Segment> octree = new();
 
@@ -70,8 +70,17 @@ namespace NathanTazi
 
                     bool pointsToSubtree = Node.ChildIndexValuePointsToSubTree(octree.nodes[nodeIndex][i]);
 
+                    float GizmosAlpha = (float)recIndex / (MaxSubdivisionLevels-1);
+                    GizmosAlpha = Mathf.Pow(GizmosAlpha,1f);
+                    GizmosAlpha = Mathf.Lerp(.2f, .7f, GizmosAlpha);
+
+                    Gizmos.color = (Color.Lerp(
+                        Color.green,
+                        Color.blue,
+                        GizmosAlpha)).WithAlpha(GizmosAlpha * GizmosAlpha * (pointsToSubtree ? .5f : 1));
+                    
                     if (pointsToSubtree)
-                        Gizmos.color = new Color(1, 1, 1,  (float)recIndex / MaxSubdivisionLevels/MaxSubdivisionLevels);
+                    { } //Gizmos.color = new Color(.5f, .8f, 1,  GizmosAlpha *.3f);}
                     else
                     {
                         int j;
@@ -81,10 +90,11 @@ namespace NathanTazi
                         
                         int branchCount = j - firstBranchIndex; //-1 ?
                         //print("fisrt branch index of leaf : " + firstBranchIndex);
-                        Gizmos.color = Color.Lerp(Color.green, Color.red,
-                            (float)branchCount / _maxSegmentsPerLeaf);
-                        Gizmos.color = Gizmos.color.WithAlpha( (float)recIndex / MaxSubdivisionLevels/MaxSubdivisionLevels);
-
+                        
+                        // Gizmos.color = Color.Lerp(
+                        //     Color.green,
+                        //     Color.red,
+                        //     (float)branchCount / _maxSegmentsPerLeaf).WithAlpha(GizmosAlpha);
                     }
                     
                     //draw bb

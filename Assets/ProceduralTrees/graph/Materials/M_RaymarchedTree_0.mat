@@ -31,8 +31,10 @@ Material:
     - _stepSize: 0.1
     - _threshold: 0.01
     m_Colors:
-    - _albedo: {r: 0.5854396, g: 0.69577277, b: 0.8679245, a: 1}
+    - _albedo: {r: 16, g: 16, b: 16, a: 1}
     - _boundingBoxCenter: {r: 78.31344, g: 49.397125, b: -28.023863, a: 0}
+    - _boundingBoxMax_ls: {r: 0, g: 0, b: 0, a: 1}
+    - _boundingBoxMin_ls: {r: 0, g: 0, b: 0, a: 1}
     - _boundingBoxSize: {r: 84.88826, g: 129.84059, b: 48.25574, a: 0}
     - _smoothing: {r: 1, g: 1, b: 1, a: 1}
     - _testSegA: {r: 30.3, g: 5.69, b: 9.11, a: 0}
