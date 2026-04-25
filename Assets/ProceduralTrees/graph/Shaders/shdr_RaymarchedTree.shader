@@ -252,16 +252,15 @@ Shader "Vegetation/RaymarchedTree"
                     if (sceneHit.distance<=_threshold)
                     {
                         //samplePoint = rayOrigin+rayDirection*rayLength;
-
+                        
                         //compute normal
-                        Segment hitSegment = _segments_ls[sceneHit.segID];
-                        SdfResult h =  SegmentSDF(samplePoint,hitSegment);
-                        SdfResult h2 =  SegmentSDF(samplePoint,_segments_ls[sceneHit.secondClosestSegID]);
-                        float3 normal = normalize(samplePoint-lerp(h.h,h2.h,sceneHit.smoothFactor));
+                        SdfResult clostesHit =  SegmentSDF(samplePoint,_segments_ls[sceneHit.segID]);
+                        SdfResult SecondClosestHit = SegmentSDF(samplePoint,_segments_ls[sceneHit.secondClosestSegID]);
+                        float3 normal = normalize(samplePoint-lerp(clostesHit.h,SecondClosestHit.h,sceneHit.smoothFactor));
                         
                         //lightning
                         output.color = ShadeTree(
-                            mul(_treeTransform_ls_to_ws,float4(normal,1)),
+                            normal,//mul(_treeTransform_ls_to_ws,float4(normal,1)),
                             mul(_treeTransform_ls_to_ws,float4(localRayDirection,1)));
                         
                         //write to depth

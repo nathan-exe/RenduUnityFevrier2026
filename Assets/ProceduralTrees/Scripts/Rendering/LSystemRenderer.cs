@@ -63,16 +63,17 @@ namespace NathanTazi
         {
             if (cube == null)
                 cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            cube.transform.SetParent(transform,true);
             
-            Vector3 min = transform.TransformPoint(generator.BoundingBoxLs.min);
-            Vector3 max = transform.TransformPoint(generator.BoundingBoxLs.max);
+            Vector3 min = (generator.BoundingBoxLs.min);
+            Vector3 max = (generator.BoundingBoxLs.max);
         
-            cube.transform.parent = null;
+            //cube.transform.parent = null;
             cube.name = "BoundingBox";
             cube.transform.localRotation = Quaternion.identity;
             cube.transform.localScale = (max - min);
             cube.transform.localPosition = (min + max)*.5f;
-            cube.transform.SetParent(transform,true);
+            //cube.transform.SetParent(transform,true);
         }
     
         /// <summary>
