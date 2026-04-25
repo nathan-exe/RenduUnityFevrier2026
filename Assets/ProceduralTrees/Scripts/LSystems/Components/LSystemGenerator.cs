@@ -87,7 +87,7 @@ public class LsystemGeneratorEditor : Editor
                 "  [] -> empiler, dépiler l'état de la tortue\n" +
                 "  () -> déclarer le début ou la fin d'une nouvelle itération\n" +
                 "  / -> enlever un symbole\n" +
-                "  1,2,3,4... -> pour diviser le rayon de la branche tel que : rayon *= (1 - 1/n)\n"
+                "  1,2,3,4...c,d,e -> pour diviser le rayon de la branche tel que : rayon *= (1 - 1/n)\n"
                 ,style);
             
             base.OnInspectorGUI();

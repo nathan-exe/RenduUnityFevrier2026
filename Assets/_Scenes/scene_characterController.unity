@@ -19877,10 +19877,6 @@ PrefabInstance:
       propertyPath: field of view
       value: 70
       objectReference: {fileID: 0}
-    - target: {fileID: 622695028666583639, guid: 44dfda35623467a4b86a65024c2348c8, type: 3}
-      propertyPath: m_CullingMask.m_Bits
-      value: 119
-      objectReference: {fileID: 0}
     - target: {fileID: 2607746998044308091, guid: 44dfda35623467a4b86a65024c2348c8, type: 3}
       propertyPath: m_LocalPosition.x
       value: -1.4878032
@@ -73999,14 +73995,14 @@ MonoBehaviour:
       - ( -> /
       - ) -> /
       - f -> ff
-      - x -> (f<5[--2f+3x]4uf[++2f-3x]uf[<--2f+3x]9uffux)
+      - x -> (f<5[--2f+3x]4uf[++2f-3x]uf[<--2f+3x]9uf3fux)
     StepSize: {x: 0.3, y: 0.18}
     angleRandomness: 10.94
     YawAngleRange: {x: 46.36, y: 360}
     PitchAngleRange: {x: 19.9, y: 4.9}
     RollAngleRange: {x: -45.5, y: 0}
     verticalAngleBiasStrength: 0.145
-    baseRadius: 0.16
+    baseRadius: 0.17
     growthThisStep: 1
     seed: 1397018770
     enableBranchReduction: 1
@@ -74783,7 +74779,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.08000982, y: 2.967872, z: 0.048633575}
-  m_LocalScale: {x: 3.41685, y: 6.2557435, z: 2.3630178}
+  m_LocalScale: {x: 3.43685, y: 6.275744, z: 2.3830178}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1212146237}

@@ -12,7 +12,9 @@ Shader "Vegetation/RaymarchedTree"
         _smoothing ("smoothing", Float) = 1
         
         //material
-        [HDR]_albedo ("albedo", Color) = (1,1,1, 1)
+        _albedo ("albedo", 2D) = "white" {} 
+        [HDR]_tint ("tint", Color) = (1,1,1, 1)
+        
         
     }
 
@@ -55,9 +57,8 @@ Shader "Vegetation/RaymarchedTree"
             matrix _treeTransform_ls_to_ws;
 
             //material
-            float3 _albedo;
-
-
+            float3 _tint;
+            sampler2D  _albedo;
             
             // === sdf 2D ===
             
@@ -198,15 +199,18 @@ Shader "Vegetation/RaymarchedTree"
             }
 
 
-            float4 ShadeTree(float3 normalWs, float3 rayDirectionWs)
+            float4 ShadeTree(float3 normalWs, float3 rayDirectionWs, float2 uv)
             {
+                //light
                 float lambert = saturate(dot(normalWs,_MainLightPosition));
                 float specular = pow(saturate(dot(reflect(_MainLightPosition, normalWs), rayDirectionWs)), 2);
                 float fresnel = pow(saturate(dot(reflect(rayDirectionWs, normalWs), rayDirectionWs)), 1.4);
                 float3 light = lerp(unity_AmbientSky *1.5 ,_MainLightColor,lambert) + specular * (_MainLightColor)*.1 + fresnel * unity_AmbientSky;
-                float3 color = _albedo * light;
 
-                return float4(color,1);
+                //color
+                float3 color = _tint * tex2D(_albedo,uv);
+                
+                return float4(color * light,1);
             }
             
             // fragment shader
@@ -239,45 +243,51 @@ Shader "Vegetation/RaymarchedTree"
                 const float maxRayLength = ComputeMaxRayLengthInBoundingBox(localRayOrigin,localRayDirection,_boundingBoxMin_ls ,_boundingBoxMax_ls);
                 float rayLength = 0;
                 
-                //raymarching : on avance le long d'un rayon jusqu'à ce que la distance avec la scène soit quasi nulle.
+                // === raymarching : on avance le long d'un rayon jusqu'à ce que la distance avec la scène soit quasi nulle. ===
                 //https://iquilezles.org/articles/raymarchingdf/
+                bool hitAnySegment = false;
+                SceneHit sceneHit;
+                float3 samplePoint;
                 for (int i =0; i<_maxIterations;i++)
                 {
-                    float3 samplePoint = localRayOrigin+localRayDirection*rayLength;
-                    
-                    SceneHit sceneHit = SceneSDF(samplePoint,branchClippingRadiusThreshold);
+                    samplePoint = localRayOrigin+localRayDirection*rayLength;
+                    sceneHit = SceneSDF(samplePoint,branchClippingRadiusThreshold);
 
                     //distance quasi nulle <=> surface touchée
                     if (sceneHit.distance<=_threshold)
                     {
-                        //compute normal
-                        SdfResult clostesHit =  SegmentSDF(samplePoint,_segments_ls[sceneHit.segID]);
-                        SdfResult SecondClosestHit = SegmentSDF(samplePoint,_segments_ls[sceneHit.secondClosestSegID]);
-                        float3 normal = normalize(samplePoint-lerp(clostesHit.h,SecondClosestHit.h,sceneHit.smoothFactor));
-                        
-                        //lightning
-                        output.color = ShadeTree(
-                            mul((float3x3)_treeTransform_ls_to_ws,normal),
-                            mul((float3x3)_treeTransform_ls_to_ws,localRayDirection));
-                        
-                        //write to depth
-                        float4 linearDepth = TransformWorldToHClip(mul(_treeTransform_ls_to_ws,float4( samplePoint,1)));
-                        float depth = linearDepth.z / linearDepth.w;
-                        output.depth = depth;
-                        
-                        return output;
+                        hitAnySegment = true;
+                        break;
                     }
                     
                     rayLength += sceneHit.distance+_threshold;
                     clip((maxRayLength-rayLength));
                 }
+                clip(hitAnySegment-.5f);
+                
+                // === shading du pixel ===
+                
+                //compute normal
+                SdfResult clostesHit =  SegmentSDF(samplePoint,_segments_ls[sceneHit.segID]);
+                SdfResult SecondClosestHit = SegmentSDF(samplePoint,_segments_ls[sceneHit.secondClosestSegID]);
+                float3 normal = normalize(samplePoint-lerp(clostesHit.h,SecondClosestHit.h,sceneHit.smoothFactor));
 
-                //nombre max de steps dépassé
-                clip(-1);
-                output.color = float4(1,0,0,1);
-                //output.color = lerp(float4(1,0,0,1),float4(0,1,0,1),SceneSDF_2D(IN.posWs)<.01);
-                output.depth = 1;
+                //compute UV
+                float2 uv = float2(0,0);
+                
+                //lighting
+                output.color = ShadeTree(
+                    mul((float3x3)_treeTransform_ls_to_ws,normal),
+                    mul((float3x3)_treeTransform_ls_to_ws,localRayDirection),
+                    uv);
+                
+                //write to depth
+                float4 linearDepth = TransformWorldToHClip(mul(_treeTransform_ls_to_ws,float4( samplePoint,1)));
+                float depth = linearDepth.z / linearDepth.w;
+                output.depth = depth;
+                
                 return output;
+                
             }
 
             
