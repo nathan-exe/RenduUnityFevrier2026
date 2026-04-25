@@ -217,6 +217,8 @@ Shader "Vegetation/RaymarchedTree"
             fragOutput frag(V2f IN) 
             {
                 fragOutput output;
+
+                // === pixel culling ===
                 
                 //on clip les backfaces ou les front faces selon si la cam
                 //est dans la bounding box pour eviter de dessiner l'arbre deux fois à chaque fois. -> +5fps
@@ -228,6 +230,9 @@ Shader "Vegetation/RaymarchedTree"
                 //on fait une premiere etape de raymarching en 2D, screenspace pour clip tous les pixels de la bb qui ne toucheront aucune branche. -> -5fps
                 //clip(-SceneSDF_2D(IN.posWs)+.01);
 
+                
+                /// === preparation raymarching ===
+                
                 //on determine le LOD
                 float DepthBasedQualityLevel = 1.0-saturate(
                     distance(_WorldSpaceCameraPos.xyz,mul(unity_ObjectToWorld,float4(0,0,0,1)).xyz)
@@ -242,8 +247,11 @@ Shader "Vegetation/RaymarchedTree"
                 const float3 localRayDirection = mul((float3x3)Inverse(_treeTransform_ls_to_ws),-GetWorldSpaceNormalizeViewDir(IN.posWs.xyz).xyz);// normalize(IN.worldPos.xyz- _WorldSpaceCameraPos.xyz );
                 const float maxRayLength = ComputeMaxRayLengthInBoundingBox(localRayOrigin,localRayDirection,_boundingBoxMin_ls ,_boundingBoxMax_ls);
                 float rayLength = 0;
+
                 
-                // === raymarching : on avance le long d'un rayon jusqu'à ce que la distance avec la scène soit quasi nulle. ===
+                // === raymarching ===
+                
+                //on avance le long d'un rayon jusqu'à ce que la distance avec la scène soit quasi nulle.
                 //https://iquilezles.org/articles/raymarchingdf/
                 bool hitAnySegment = false;
                 SceneHit sceneHit;
@@ -268,12 +276,14 @@ Shader "Vegetation/RaymarchedTree"
                 // === shading du pixel ===
                 
                 //compute normal
-                SdfResult clostesHit =  SegmentSDF(samplePoint,_segments_ls[sceneHit.segID]);
+                SdfResult closestHit =  SegmentSDF(samplePoint,_segments_ls[sceneHit.segID]);
                 SdfResult SecondClosestHit = SegmentSDF(samplePoint,_segments_ls[sceneHit.secondClosestSegID]);
-                float3 normal = normalize(samplePoint-lerp(clostesHit.h,SecondClosestHit.h,sceneHit.smoothFactor));
+                float3 normal = normalize(samplePoint-lerp(closestHit.h,SecondClosestHit.h,sceneHit.smoothFactor));
 
                 //compute UV
                 float2 uv = float2(0,0);
+                uv.y = -lerp(closestHit.t,1-SecondClosestHit.t,sceneHit.smoothFactor);
+                 
                 
                 //lighting
                 output.color = ShadeTree(

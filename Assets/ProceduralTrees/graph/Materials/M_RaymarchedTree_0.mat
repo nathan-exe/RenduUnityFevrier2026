@@ -24,7 +24,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _albedo:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: afb1274f8d6e3004fa9d7d6a5ff4f5df, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints:
@@ -43,6 +43,6 @@ Material:
     - _smoothing: {r: 1, g: 1, b: 1, a: 1}
     - _testSegA: {r: 30.3, g: 5.69, b: 9.11, a: 0}
     - _testSegB: {r: 30.8, g: 1.2, b: 9.11, a: 0}
-    - _tint: {r: 0.5849056, g: 0.536376, b: 0.49937698, a: 1}
+    - _tint: {r: 3.962264, g: 3.1750824, b: 3.0464578, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

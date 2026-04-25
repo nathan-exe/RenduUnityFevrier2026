@@ -203,6 +203,7 @@ namespace NathanTazi
 
                 if (!foundSymbol)
                 {
+                    //division du rayon de la branche
                     if(symbol>'0' && symbol<='9')
                     {
                         int number = symbol-'0';
