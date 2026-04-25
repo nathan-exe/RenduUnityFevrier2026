@@ -206,7 +206,7 @@ Shader "Vegetation/RaymarchedTree"
                 float3 light = lerp(unity_AmbientSky *1.5 ,_MainLightColor,lambert) + specular * (_MainLightColor)*.1 + fresnel * unity_AmbientSky;
                 float3 color = _albedo * light;
 
-                return float4(normalWs,1);
+                return float4(color,1);
             }
             
             // fragment shader
@@ -224,7 +224,7 @@ Shader "Vegetation/RaymarchedTree"
                 //on fait une premiere etape de raymarching en 2D, screenspace pour clip tous les pixels de la bb qui ne toucheront aucune branche. -> -5fps
                 //clip(-SceneSDF_2D(IN.posWs)+.01);
 
-                //LOD
+                //on determine le LOD
                 float DepthBasedQualityLevel = 1.0-saturate(
                     distance(_WorldSpaceCameraPos.xyz,mul(unity_ObjectToWorld,float4(0,0,0,1)).xyz)
                     * 1/200//_ProjectionParams.w
@@ -235,7 +235,7 @@ Shader "Vegetation/RaymarchedTree"
                 
                 //definition du rayon sur lequel on va se déplacer
                 float3 localRayOrigin = cameraIsInsideBoundingBox ? localCameraPos : IN.posLs;
-                const float3 localRayDirection = mul(Inverse(_treeTransform_ls_to_ws),-GetWorldSpaceNormalizeViewDir(IN.posWs.xyz));// normalize(IN.worldPos.xyz- _WorldSpaceCameraPos.xyz );
+                const float3 localRayDirection = mul((float3x3)Inverse(_treeTransform_ls_to_ws),-GetWorldSpaceNormalizeViewDir(IN.posWs.xyz).xyz);// normalize(IN.worldPos.xyz- _WorldSpaceCameraPos.xyz );
                 const float maxRayLength = ComputeMaxRayLengthInBoundingBox(localRayOrigin,localRayDirection,_boundingBoxMin_ls ,_boundingBoxMax_ls);
                 float rayLength = 0;
                 
@@ -243,7 +243,6 @@ Shader "Vegetation/RaymarchedTree"
                 //https://iquilezles.org/articles/raymarchingdf/
                 for (int i =0; i<_maxIterations;i++)
                 {
-                    
                     float3 samplePoint = localRayOrigin+localRayDirection*rayLength;
                     
                     SceneHit sceneHit = SceneSDF(samplePoint,branchClippingRadiusThreshold);
@@ -251,8 +250,6 @@ Shader "Vegetation/RaymarchedTree"
                     //distance quasi nulle <=> surface touchée
                     if (sceneHit.distance<=_threshold)
                     {
-                        //samplePoint = rayOrigin+rayDirection*rayLength;
-                        
                         //compute normal
                         SdfResult clostesHit =  SegmentSDF(samplePoint,_segments_ls[sceneHit.segID]);
                         SdfResult SecondClosestHit = SegmentSDF(samplePoint,_segments_ls[sceneHit.secondClosestSegID]);
@@ -260,8 +257,8 @@ Shader "Vegetation/RaymarchedTree"
                         
                         //lightning
                         output.color = ShadeTree(
-                            normal,//mul(_treeTransform_ls_to_ws,float4(normal,1)),
-                            mul(_treeTransform_ls_to_ws,float4(localRayDirection,1)));
+                            mul((float3x3)_treeTransform_ls_to_ws,normal),
+                            mul((float3x3)_treeTransform_ls_to_ws,localRayDirection));
                         
                         //write to depth
                         float4 linearDepth = TransformWorldToHClip(mul(_treeTransform_ls_to_ws,float4( samplePoint,1)));
