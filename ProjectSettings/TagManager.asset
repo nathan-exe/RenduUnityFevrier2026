@@ -36,7 +36,7 @@ TagManager:
   - 
   - 
   - 
-  - 
+  - HalfRes
   m_SortingLayers:
   - name: Default
     uniqueID: 0
@@ -50,3 +50,4 @@ TagManager:
   - Light Layer 5
   - Light Layer 6
   - Light Layer 7
+  - HalfRes

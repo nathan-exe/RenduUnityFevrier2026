@@ -48,6 +48,11 @@ namespace NathanTazi
             if (buffer != null)
                 buffer.Release();
             buffer = new ComputeBuffer(generator.Graph.segments.Count,Segment.Size );
+            
+            //on trie les capsules selon leur rayon pour tomber plus vite sur les grosses capsules dans le fragment shader.
+            generator.Graph.segments
+                .Sort((seg1, seg2) => seg2.radius.CompareTo(seg1.radius));
+            
             buffer.SetData(generator.Graph.segments);
         }
         

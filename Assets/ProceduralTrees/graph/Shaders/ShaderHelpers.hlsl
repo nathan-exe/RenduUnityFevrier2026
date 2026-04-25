@@ -4,10 +4,7 @@ float smoothstep(float a,float b,float alpha)
     return lerp(a,b,t);
 }
 
-float interpolate_noise(float a,float b,float alpha) //the function used by the 3D noise computation
-{
-    return smoothstep(a,b,alpha);
-}
+
 
 float LinearDepthToRawDepth(float linearDepth)
 {
@@ -45,6 +42,11 @@ float3 hash3( float3 p ) // replace this by something better
 float hash(float3 p)
 {
     return frac( -1.0 + 2.0*frac(sin(dot(p,float3(127.1,311.7, 74.7)))*43758.5453123));
+}
+
+float interpolate_noise(float a,float b,float alpha) //the function used by the 3D noise computation
+{
+    return smoothstep(a,b,alpha);
 }
 
 float noise(float3 p)

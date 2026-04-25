@@ -56,6 +56,64 @@ Shader "Vegetation/RaymarchedTree"
 
             //material
             float3 _albedo;
+
+
+            
+            // === sdf 2D ===
+            
+            /*float CapsuleSdf2D(float2 p,float2 a, float2 b, float radius)
+            {
+                //https://iquilezles.org/articles/distfunctions2d/ (segment un peu pimp avec les 2 radius à la fin)
+                float2 pa = p-a, ba = b-a;
+                float h = clamp( dot(pa,ba)/dot(ba,ba), 0.0, 1.0 );
+                return length( pa - ba*h ) - radius;//- lerp(radiusB,radiusA,h);
+            }
+
+            float2 TreeSpacePointToScreenPoint(float3 positionTs, matrix treeToClip)
+            {
+                float aspectRatio = _ScreenSize.y*_ScreenSize.z; //  height/width
+                float3 positionCs = mul(treeToClip, float4(positionTs,1));
+                return positionCs.xy/positionCs.z * float2(1,aspectRatio);
+            }
+
+            float TreeSpaceRadiusToScreenSpaceRadius(float3 PosTs,float3 cameraPosWs, float radiusTs)
+            {
+                float radiusWs = radiusTs; //todo : scaling
+                float3 PosWs = mul(_treeTransform_ls_to_ws,float4(PosTs,1)); //world space
+
+                float distanceToCamera = distance (PosWs, cameraPosWs);
+
+                return length(radiusWs/distanceToCamera);
+            }
+            
+            //retourne la distance signée avec l'ensemble des branches de l'arbre, en 2D
+            float SceneSDF_2D(float3 positionWs)
+            {
+                float aspectRatio = _ScreenSize.y*_ScreenSize.z; //  height/width
+                matrix worldToScreen = mul( unity_CameraProjection,  unity_WorldToCamera);
+                matrix treeToScreen = mul( worldToScreen, _treeTransform_ls_to_ws);
+                float3 posCs = mul(worldToScreen, float4(positionWs,1));
+                float2 screenPos = posCs.xy/posCs.z * float2(1,aspectRatio);
+                float3 cameraPosWs = mul(unity_CameraToWorld,float4(0,0,0,1));
+                
+                float distance = 100000000;
+                for (int i = 0; i<_segmentCount;i++)
+                {
+                    float2 a2D = TreeSpacePointToScreenPoint(_segments_ls[i].a,treeToScreen);
+                    float2 b2D = TreeSpacePointToScreenPoint(_segments_ls[i].b,treeToScreen);
+                    float r2D = TreeSpaceRadiusToScreenSpaceRadius(_segments_ls[i].a,cameraPosWs,_segments_ls[i].radius);
+                    //float smoothing2D = TreeSpaceRadiusToScreenSpaceRadius(_smoothing);
+                    float sdf = CapsuleSdf2D(screenPos,a2D,b2D,r2D);
+                    distance = min(sdf,distance);
+                    //distance = smooth_min(distance,sdf,smoothing2D*_segments_ls[i].radius);
+                }
+                
+                return distance;
+            }*/
+
+            
+
+            // === sdf 3D ===
             
             //retourne la distance signée avec un segment épaissis; une capsule
             //https://iquilezles.org/articles/distfunctions/
@@ -65,24 +123,18 @@ Shader "Vegetation/RaymarchedTree"
                 
                 //H = le point M (local pos) projeté sur le segment AB.
                 // on retourne la distance entre H et M - le rayon de la capsule.
-                float3 A = float4(segment.a,1);
-                float3 B = float4(segment.b,1);
-                float3 AM = localPos - A;
-                float3 AB = B - A;
-                float normeAB = length(AB);
+                float3 AM = localPos - segment.a;
+                float3 AB = segment.b - segment.a;
                 
-                float projectionLength = dot(AB,AM)/(normeAB * normeAB);
-                projectionLength = saturate(projectionLength);
-                float3 H = A + AB*(projectionLength);
+                output.t =  saturate(dot(AB,AM)/ dot(AB,AB)); // t : la longueur normalisée de la projection de M sur le segment AB 
+                output.h  = segment.a + AB * (output.t);
 
-                output.t = projectionLength;
-                output.h = H;
-                output.sdf =  length(localPos - H) - segment.radius;//todo : lerp(radiusA, radiusB, t)
+                output.sdf =  length(localPos - output.h) - segment.radius;//todo : lerp(radiusA, radiusB, t)
                 return output;
             }
-
+            
             //retourne la distance signée avec l'ensemble des branches de l'arbre
-            SceneHit SceneSDF(float3 localPos)
+            SceneHit SceneSDF(float3 localPos, float minBranchRadius = 0)
             {
                 //todo : octree ou binary space partitionning pour éviter d'itérer à travers tous les segments.
                 //todo : interpolation d'attributs entre les 2 segments les plus proches
@@ -90,11 +142,10 @@ Shader "Vegetation/RaymarchedTree"
                 SceneHit hit;
                 hit.distance = 1000000;
                 hit.segID = 0;
-                for (int i = 0; i<_segmentCount;i++)
+                for (int i = 0; i<_segmentCount && hit.distance>_threshold && _segments_ls[i].radius>minBranchRadius;i++)
                 {
                     SdfResult result = SegmentSDF(localPos,_segments_ls[i]);
                     float oldDistance = hit.distance;
-                    
                     
                     hit.distance = smooth_min(hit.distance,result.sdf,_smoothing*_segments_ls[i].radius);
                     if (oldDistance > result.sdf)
@@ -122,7 +173,7 @@ Shader "Vegetation/RaymarchedTree"
             {
                 float4 positionCS  : SV_POSITION;
                 float3 posLs  : TEXCOORD0;
-                float3 posWs  : TEXCOORD1;
+                float4 posWs  : TEXCOORD1;
                 float3 normalWs  : TEXCOORD2;
             };
             
@@ -139,11 +190,23 @@ Shader "Vegetation/RaymarchedTree"
 
                 OUT.positionCS = TransformObjectToHClip(vertex.positionOs.xyz);
                 OUT.posWs = mul(unity_ObjectToWorld,vertex.positionOs);
-                OUT.posLs =  mul(Inverse(_treeTransform_ls_to_ws),float4( OUT.posWs,1));
+                OUT.posLs =  mul(Inverse(_treeTransform_ls_to_ws), OUT.posWs);
                 OUT.normalWs = TransformObjectToWorldNormal(vertex.normalOs);
                     
                 // Returning the output. 
                 return OUT;
+            }
+
+
+            float4 ShadeTree(float3 normalWs, float3 rayDirectionWs)
+            {
+                float lambert = saturate(dot(normalWs,_MainLightPosition));
+                float specular = pow(saturate(dot(reflect(_MainLightPosition, normalWs), rayDirectionWs)), 2);
+                float fresnel = pow(saturate(dot(reflect(rayDirectionWs, normalWs), rayDirectionWs)), 1.4);
+                float3 light = lerp(unity_AmbientSky *1.5 ,_MainLightColor,lambert) + specular * (_MainLightColor)*.1 + fresnel * unity_AmbientSky;
+                float3 color = _albedo * light;
+
+                return float4(normalWs,1);
             }
             
             // fragment shader
@@ -152,12 +215,24 @@ Shader "Vegetation/RaymarchedTree"
                 fragOutput output;
                 
                 //on clip les backfaces ou les front faces selon si la cam
-                //est dans la bounding box pour eviter de dessiner l'arbre deux fois à chaque fois.
+                //est dans la bounding box pour eviter de dessiner l'arbre deux fois à chaque fois. -> +5fps
                 float3 localCameraPos = mul(Inverse(_treeTransform_ls_to_ws),float4(_WorldSpaceCameraPos,1));
                 bool cameraIsInsideBoundingBox = is_in_bounding_box(localCameraPos,_boundingBoxMin_ls-.1,_boundingBoxMax_ls+.1);
                 bool backface = dot(IN.normalWs,GetWorldSpaceNormalizeViewDir(IN.posWs.xyz))<0;
                 clip(!cameraIsInsideBoundingBox ^ backface ? 1 : -1);
 
+                //on fait une premiere etape de raymarching en 2D, screenspace pour clip tous les pixels de la bb qui ne toucheront aucune branche. -> -5fps
+                //clip(-SceneSDF_2D(IN.posWs)+.01);
+
+                //LOD
+                float DepthBasedQualityLevel = 1.0-saturate(
+                    distance(_WorldSpaceCameraPos.xyz,mul(unity_ObjectToWorld,float4(0,0,0,1)).xyz)
+                    * 1/200//_ProjectionParams.w
+                    );//normalized distance to camera
+                DepthBasedQualityLevel *= DepthBasedQualityLevel*DepthBasedQualityLevel;
+                DepthBasedQualityLevel *= DepthBasedQualityLevel*DepthBasedQualityLevel;
+                float branchClippingRadiusThreshold = min(.1-DepthBasedQualityLevel,0.1*_segments_ls[0].radius);
+                
                 //definition du rayon sur lequel on va se déplacer
                 float3 localRayOrigin = cameraIsInsideBoundingBox ? localCameraPos : IN.posLs;
                 const float3 localRayDirection = mul(Inverse(_treeTransform_ls_to_ws),-GetWorldSpaceNormalizeViewDir(IN.posWs.xyz));// normalize(IN.worldPos.xyz- _WorldSpaceCameraPos.xyz );
@@ -168,8 +243,10 @@ Shader "Vegetation/RaymarchedTree"
                 //https://iquilezles.org/articles/raymarchingdf/
                 for (int i =0; i<_maxIterations;i++)
                 {
+                    
                     float3 samplePoint = localRayOrigin+localRayDirection*rayLength;
-                    SceneHit sceneHit = SceneSDF(samplePoint);
+                    
+                    SceneHit sceneHit = SceneSDF(samplePoint,branchClippingRadiusThreshold);
 
                     //distance quasi nulle <=> surface touchée
                     if (sceneHit.distance<=_threshold)
@@ -183,34 +260,34 @@ Shader "Vegetation/RaymarchedTree"
                         float3 normal = normalize(samplePoint-lerp(h.h,h2.h,sceneHit.smoothFactor));
                         
                         //lightning
-                        float lambert = saturate(dot(normal,_MainLightPosition));
-                        float specular = pow(saturate(dot(reflect(_MainLightPosition, normal), localRayDirection)), 2);
-                        float fresnel = pow(saturate(dot(reflect(localRayDirection, normal), localRayDirection)), 1.4);
-                        float3 light = lerp(unity_AmbientSky *1.5 ,_MainLightColor,lambert) + specular * (_MainLightColor)*.1 + fresnel * unity_AmbientSky;
-                        float3 color = _albedo * light;
+                        output.color = ShadeTree(
+                            mul(_treeTransform_ls_to_ws,float4(normal,1)),
+                            mul(_treeTransform_ls_to_ws,float4(localRayDirection,1)));
                         
                         //write to depth
                         float4 linearDepth = TransformWorldToHClip(mul(_treeTransform_ls_to_ws,float4( samplePoint,1)));
                         float depth = linearDepth.z / linearDepth.w;
                         output.depth = depth;
-                        output.color = float4(color,.4);
-                        return output;
                         
-                        //return lerp( float4(1,0,0,1) , float4(color,1),_segments[sceneHit.segID].age);
+                        return output;
                     }
                     
-                    rayLength += sceneHit.distance;
-                    clip((rayLength < maxRayLength)-.5);
+                    rayLength += sceneHit.distance+_threshold;
+                    clip((maxRayLength-rayLength));
                 }
 
                 //nombre max de steps dépassé
                 clip(-1);
                 output.color = float4(1,0,0,1);
+                //output.color = lerp(float4(1,0,0,1),float4(0,1,0,1),SceneSDF_2D(IN.posWs)<.01);
                 output.depth = 1;
                 return output;
             }
+
+            
             ENDHLSL
         }
+        
 
 //shadow pass
 //Pass
