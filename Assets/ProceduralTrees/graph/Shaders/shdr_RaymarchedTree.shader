@@ -141,7 +141,7 @@ Shader "Vegetation/RaymarchedTree"
                 //todo : interpolation d'attributs entre les 2 segments les plus proches
                 
                 SceneHit hit;
-                hit.distance = 1000000;
+                hit.distance = 1000;
                 hit.segID = 0;
                 for (int i = 0; i<_segmentCount && hit.distance>_threshold && _segments_ls[i].radiusA>minBranchRadius;i++)
                 {
@@ -292,12 +292,14 @@ Shader "Vegetation/RaymarchedTree"
                 float2 uv;
                 uv.x = angle/PI/2;// * _segments_ls[sceneHit.segID].radius/_segments_ls[0].radius;
                 uv.y = -lerp(closestHit.t,SecondClosestHit.t,sceneHit.smoothFactor);
+
+                float age = lerp(_segments_ls[sceneHit.segID].age,_segments_ls[sceneHit.secondClosestSegID].age,sceneHit.smoothFactor);
                 
                 //lighting
                 output.color = ShadeTree(
                     mul((float3x3)_treeTransform_ls_to_ws,normal),
                     mul((float3x3)_treeTransform_ls_to_ws,localRayDirection),
-                    uv)*_segments_ls[sceneHit.segID].age;
+                    uv)*(1+age*.2);
                 
                 //write to depth
                 float4 linearDepth = TransformWorldToHClip(mul(_treeTransform_ls_to_ws,float4( samplePoint,1)));

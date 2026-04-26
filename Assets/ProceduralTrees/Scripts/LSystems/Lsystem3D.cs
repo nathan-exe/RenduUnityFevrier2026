@@ -69,10 +69,19 @@ namespace NathanTazi
         //comme en python, mais en 3D
         private struct Turtle
         {
-            public Vector3 point;
+            public Vector3 point
+            {
+                get { return _point;}
+                set
+                {
+                    traveledDistance += Vector3.Distance(_point, value);
+                    _point = value;
+                }
+            }
+            private Vector3 _point;
 
             public Matrix4x4 transform ;
-
+            public float traveledDistance;
             public Turtle(float baseRadius) : this()
             {
                 this.currentRadius = baseRadius;
@@ -108,7 +117,6 @@ namespace NathanTazi
             foreach (char symbol in Symbols)
             {
                 
-                float age = isNewSegment ? growthThisStep : 1f;
                 bool foundSymbol = true;
                 switch (symbol)
                 {
@@ -127,7 +135,7 @@ namespace NathanTazi
                             //&& !(i < lastSymbolID-1 && (Symbols[i + 1] == '(' || Symbols[i + 1] == '(')&&Symbols[i + 2] == 'f' ) ))
                         {
                             Vector3 b = turtle.point;
-                            plantGraph.segments.Add(new Segment(plantStart, b, turtle.oldRadius,turtle.currentRadius,age));
+                            plantGraph.segments.Add(new Segment(plantStart, b, turtle.oldRadius,turtle.currentRadius,turtle.traveledDistance));
                             turtle.oldRadius = turtle.currentRadius;
                             
                         }
@@ -140,7 +148,7 @@ namespace NathanTazi
                         float actualStepSize = (StepSize.x + Random.value * StepSize.y ) * (isNewSegment ? growthThisStep : 1);
                         turtle.point += turtle.direction * actualStepSize;
                         Vector3 b = turtle.point;
-                        plantGraph.segments.Add(new Segment(plantStart, b, turtle.oldRadius,turtle.currentRadius,age));
+                        plantGraph.segments.Add(new Segment(plantStart, b, turtle.oldRadius,turtle.currentRadius,turtle.traveledDistance));
                         turtle.oldRadius = turtle.currentRadius;
                         
                         plantGraph.leaves.Add(new(

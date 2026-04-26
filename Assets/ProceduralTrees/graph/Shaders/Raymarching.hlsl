@@ -31,16 +31,12 @@ float smooth_min( float a, float b, float k )
     // k *= 4.0;
     // float h = max( k-abs(a-b), 0.0 )/k;
     // return min(a,b) - h*h*k*(1.0/4.0);
+    // k *= 2.0;
+    // float x = b-a;
+    // return 0.5*( a+b-sqrt(x*x+k*k) );
     k *= 2.0;
     float x = b-a;
     return 0.5*( a+b-sqrt(x*x+k*k) );
-    k *= 1.0;
-    float r = exp2(-a/k) + exp2(-b/k);
-    return -k*log2(r);
-    
-    // k *= 4.0;
-    // float h = max( k-abs(a-b), 0.0 )/k;
-    // return min(a,b) - h*h*k*(1.0/4.0);
 }
 
 // === bounding box helper functions ===
