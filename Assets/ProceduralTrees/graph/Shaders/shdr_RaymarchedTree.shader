@@ -281,9 +281,18 @@ Shader "Vegetation/RaymarchedTree"
                 float3 normal = normalize(samplePoint-lerp(closestHit.h,SecondClosestHit.h,sceneHit.smoothFactor));
 
                 //compute UV
-                float2 uv = float2(0,0);
-                uv.y = -lerp(closestHit.t,1-SecondClosestHit.t,sceneHit.smoothFactor);
-                 
+                float3 mainSegmentDir = (_segments_ls[sceneHit.segID].b-_segments_ls[sceneHit.segID].a);
+                float3 secondSegmentDir = (_segments_ls[sceneHit.secondClosestSegID].b-_segments_ls[sceneHit.secondClosestSegID].a);
+                float3 referenceVector = float3(0,1,0);//normalize(_segments_ls[sceneHit.secondClosestSegID].b-_segments_ls[sceneHit.secondClosestSegID].a);
+                float3 dir = normalize(lerp(mainSegmentDir,secondSegmentDir,sceneHit.smoothFactor));
+                referenceVector = normalize(projectOnPlane(referenceVector,dir));
+                float angle = FastAngle(normal,referenceVector);
+                
+                float2 uv;
+                uv.x = angle/PI/2 * _segments_ls[sceneHit.segID].radius/_segments_ls[0].radius;
+                uv.y = -lerp(closestHit.t,SecondClosestHit.t,sceneHit.smoothFactor);
+
+                
                 
                 //lighting
                 output.color = ShadeTree(

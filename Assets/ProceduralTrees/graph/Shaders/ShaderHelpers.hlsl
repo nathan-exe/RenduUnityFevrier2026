@@ -90,3 +90,20 @@ float fractal_noise(float3 p,int levels,float roughness,float lacunarity)
     }
     return value/totalIntensity;
 }
+
+float3 projectOnPlane( float3 vec, float3 normal )
+{
+    return vec - normal * ( dot( vec, normal ) / dot( normal, normal ) );
+}
+
+float FastAngle(float3 normalizedA, float3 normalizedB)
+{
+    return acos(dot(normalizedA, normalizedB));
+}
+
+float Angle(float3 a, float3 b)
+{
+    return FastAngle(normalize(a), normalize(b));
+}
+
+
