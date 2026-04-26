@@ -239,8 +239,9 @@ namespace NathanTazi
         {
             const float EPSILON = .001f;
 
-            bbMin -= Vector3.one * seg.radius;
-            bbMax += Vector3.one * seg.radius;
+            float maxRadius = Mathf.Max(seg.radiusA, seg.radiusB);
+            bbMin -= Vector3.one * maxRadius;
+            bbMax += Vector3.one * maxRadius;
 
             // Compute box center-point and half-length extents
             Vector3 c = (bbMin + bbMax) * 0.5f; // Box center

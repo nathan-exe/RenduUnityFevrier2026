@@ -52,7 +52,7 @@ namespace NathanTazi
             //on trie les capsules selon leur rayon pour tomber plus vite sur les grosses capsules dans le fragment shader.
             //todo : SortedSet<Segment>
             generator.Graph.segments
-                .Sort((seg1, seg2) => seg2.radius.CompareTo(seg1.radius));
+                .Sort((seg1, seg2) => seg2.radiusA.CompareTo(seg1.radiusA));
             buffer.SetData(generator.Graph.segments);
         }
         
@@ -82,6 +82,7 @@ namespace NathanTazi
         /// <param name="bounds"></param>
         void UpdateMaterialValues()
         {
+            
             MaterialPropertyBlock materialBlock = new MaterialPropertyBlock();
             print("bbMin : " +generator.BoundingBoxLs.min);
             materialBlock.SetVector(BoundingBoxMinLsShaderProperty, generator.BoundingBoxLs.min);

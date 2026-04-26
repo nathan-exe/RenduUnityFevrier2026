@@ -8,16 +8,17 @@ namespace NathanTazi
     /// </summary>
     public struct Segment
     {
-        public const int Size = 8 * sizeof(float); 
+        public const int Size = 9 * sizeof(float); 
     
         public Vector3 a,b;
-        public float radius;
+        public float radiusA, radiusB;
         public float age;
-        public Segment(Vector3 a, Vector3 b, float radius,float age)
+        public Segment(Vector3 a, Vector3 b, float radiusA,float radiusB,float age)
         {
             this.a = a;
             this.b = b;
-            this.radius = radius;
+            this.radiusA = radiusA;
+            this.radiusB = radiusB;
             this.age = age;
         }
     

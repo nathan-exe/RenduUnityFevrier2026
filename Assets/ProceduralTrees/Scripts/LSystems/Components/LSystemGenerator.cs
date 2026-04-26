@@ -105,6 +105,9 @@ public class LsystemGeneratorEditor : Editor
             GUILayout.Label("Segment count : " + t.Graph.segments.Count);
             GUILayout.Label("Leaf count : " + t.Graph.leaves.Count);
             GUILayout.Label("Lsystem symbol count : " + t.lsystem.Symbols.Length);
+            GUILayout.Space(10);
+            GUILayout.Label("symbols : " +(t.lsystem.Symbols.Length>100?  t.lsystem.Symbols.Substring(0,100)+"...":t.lsystem.Symbols));
+            
         }
         
     }

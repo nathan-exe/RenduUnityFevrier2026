@@ -72,9 +72,17 @@ namespace NathanTazi
             public Vector3 point;
 
             public Matrix4x4 transform ;
-            public Vector3 direction => (transform * Vector3.up);
 
-            public float radius;
+            public Turtle(float baseRadius) : this()
+            {
+                this.currentRadius = baseRadius;
+                this.oldRadius = baseRadius;
+            }
+
+            public Vector3 direction => (transform * Vector3.up);
+            
+            public float currentRadius;
+            public float oldRadius;
         }
         
         /// <summary>
@@ -84,9 +92,8 @@ namespace NathanTazi
         public override PlantGraph ComputeGraph()
         {
             Random.InitState(seed);
-            Turtle turtle = new Turtle();
+            Turtle turtle = new Turtle(baseRadius);
             turtle.transform = Matrix4x4.identity;
-            turtle.radius = baseRadius;
         
             Stack<Turtle> stack = new Stack<Turtle>();
         
@@ -120,7 +127,9 @@ namespace NathanTazi
                             //&& !(i < lastSymbolID-1 && (Symbols[i + 1] == '(' || Symbols[i + 1] == '(')&&Symbols[i + 2] == 'f' ) ))
                         {
                             Vector3 b = turtle.point;
-                            plantGraph.segments.Add(new Segment(plantStart, b, turtle.radius,age));
+                            plantGraph.segments.Add(new Segment(plantStart, b, turtle.oldRadius,turtle.currentRadius,age));
+                            turtle.oldRadius = turtle.currentRadius;
+                            
                         }
                     
                         break;}
@@ -131,12 +140,13 @@ namespace NathanTazi
                         float actualStepSize = (StepSize.x + Random.value * StepSize.y ) * (isNewSegment ? growthThisStep : 1);
                         turtle.point += turtle.direction * actualStepSize;
                         Vector3 b = turtle.point;
-                        plantGraph.segments.Add(new Segment(a, b, turtle.radius,age));
+                        plantGraph.segments.Add(new Segment(plantStart, b, turtle.oldRadius,turtle.currentRadius,age));
+                        turtle.oldRadius = turtle.currentRadius;
                         
                         plantGraph.leaves.Add(new(
                             turtle.point,
                             turtle.transform,
-                            turtle.radius/baseRadius));
+                            turtle.currentRadius/baseRadius));
                         
                         break; }
                 
@@ -207,12 +217,12 @@ namespace NathanTazi
                     if(symbol>'0' && symbol<='9')
                     {
                         int number = symbol-'0';
-                        turtle.radius *= (1.0f - 1.0f/number);
+                        turtle.currentRadius *= (1.0f - 1.0f/number);
                     }
                     else if(symbol>='a' && symbol<='f')
                     {
                         int number = symbol-'a'+ 10;
-                        turtle.radius *= (1.0f - 1.0f/number);
+                        turtle.currentRadius *= (1.0f - 1.0f/number);
                     }
                 }
 

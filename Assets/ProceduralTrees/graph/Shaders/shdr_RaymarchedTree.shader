@@ -130,7 +130,7 @@ Shader "Vegetation/RaymarchedTree"
                 output.t =  saturate(dot(AB,AM)/ dot(AB,AB)); // t : la longueur normalisée de la projection de M sur le segment AB 
                 output.h  = segment.a + AB * (output.t);
 
-                output.sdf =  length(localPos - output.h) - segment.radius;//todo : lerp(radiusA, radiusB, t)
+                output.sdf =  length(localPos - output.h) - lerp(segment.radiusA, segment.RadiusB, output.t);
                 return output;
             }
             
@@ -143,15 +143,15 @@ Shader "Vegetation/RaymarchedTree"
                 SceneHit hit;
                 hit.distance = 1000000;
                 hit.segID = 0;
-                for (int i = 0; i<_segmentCount && hit.distance>_threshold && _segments_ls[i].radius>minBranchRadius;i++)
+                for (int i = 0; i<_segmentCount && hit.distance>_threshold && _segments_ls[i].radiusA>minBranchRadius;i++)
                 {
                     SdfResult result = SegmentSDF(localPos,_segments_ls[i]);
                     float oldDistance = hit.distance;
                     
-                    hit.distance = smooth_min(hit.distance,result.sdf,_smoothing*_segments_ls[i].radius);
+                    hit.distance = smooth_min(hit.distance,result.sdf,_smoothing*_segments_ls[i].radiusA);
                     if (oldDistance > result.sdf)
                     {
-                        hit.smoothFactor =  abs(hit.distance-result.sdf)/(_smoothing*_segments_ls[i].radius);
+                        hit.smoothFactor =  abs(hit.distance-result.sdf)/(_smoothing*_segments_ls[i].radiusA);
                         hit.secondClosestSegID = hit.segID;
                         hit.segID = i;
                     }
@@ -240,7 +240,7 @@ Shader "Vegetation/RaymarchedTree"
                     );//normalized distance to camera
                 DepthBasedQualityLevel *= DepthBasedQualityLevel*DepthBasedQualityLevel;
                 DepthBasedQualityLevel *= DepthBasedQualityLevel*DepthBasedQualityLevel;
-                float branchClippingRadiusThreshold = min(.1-DepthBasedQualityLevel,0.1*_segments_ls[0].radius);
+                float branchClippingRadiusThreshold = min(.1-DepthBasedQualityLevel,0.1*_segments_ls[0].radiusA);
                 
                 //definition du rayon sur lequel on va se déplacer
                 float3 localRayOrigin = cameraIsInsideBoundingBox ? localCameraPos : IN.posLs;

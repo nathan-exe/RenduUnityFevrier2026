@@ -3,9 +3,9 @@
 // un segment défini par deux points et un rayon.
 struct Segment
 {
-    half3 a,b;
-    half radius;
-    half age;
+    float3 a,b;
+    float radiusA,RadiusB;
+    float age;
 };
 
 struct SdfResult
@@ -22,7 +22,7 @@ struct SceneHit
     int secondClosestSegID;
     float smoothFactor;
 };
-
+ 
 // === math ===
 
 //https://iquilezles.org/articles/smin/
