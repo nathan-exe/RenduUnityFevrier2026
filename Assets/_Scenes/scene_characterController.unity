@@ -31142,14 +31142,14 @@ MonoBehaviour:
       - ( -> /
       - ) -> /
       - f -> (ff)
-      - x -> (f<5[--2f+3x]4uf[++2f-3x]uf[<--2f+3x]9uffux)
+      - x -> (f<5[--2f+3x]4uf[++2f-3x]uf[<--2f+3x]9uf9fux)
     StepSize: {x: 0.3, y: 0.18}
     angleRandomness: 10.94
     YawAngleRange: {x: 46.36, y: 360}
     PitchAngleRange: {x: 19.9, y: 4.9}
     RollAngleRange: {x: -45.5, y: 0}
     verticalAngleBiasStrength: 0.145
-    baseRadius: 0.58
+    baseRadius: 0.41
     growthThisStep: 1
     seed: 1830506701
     enableBranchReduction: 1
@@ -73481,15 +73481,15 @@ MonoBehaviour:
       - ) -> /
       - f -> ff
       - x -> (f<5[--2f+3x]4uf[++2f-3x]uf[<--2f+3x]9uf3fux)
-    StepSize: {x: 0.3, y: 0.18}
+    StepSize: {x: 0.3, y: 0.56}
     angleRandomness: 17.97
-    YawAngleRange: {x: 46.36, y: 360}
-    PitchAngleRange: {x: 11.28, y: 4.9}
+    YawAngleRange: {x: 51.4, y: 360}
+    PitchAngleRange: {x: -20.8, y: 4.9}
     RollAngleRange: {x: -45.5, y: 0}
     verticalAngleBiasStrength: 0.145
-    baseRadius: 0.26
+    baseRadius: 0.25
     growthThisStep: 1
-    seed: 2053996731
+    seed: 1230886896
     enableBranchReduction: 1
   _axiom: x
   totalGrowth: 1
@@ -87068,8 +87068,8 @@ Transform:
   m_GameObject: {fileID: 1437371039}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.004395, y: 6.675661, z: 1.0478537}
-  m_LocalScale: {x: 5.16879, y: 14.511322, z: 9.387566}
+  m_LocalPosition: {x: 2.004395, y: 6.675661, z: 1.0478536}
+  m_LocalScale: {x: 4.8287897, y: 14.171322, z: 9.047565}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 545857091}
@@ -91656,8 +91656,8 @@ Transform:
   m_GameObject: {fileID: 1519551898}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.1164247, y: 2.9106302, z: 0.6093144}
-  m_LocalScale: {x: 2.7528493, y: 6.341261, z: 4.24833}
+  m_LocalPosition: {x: -0.107439995, y: 4.214676, z: -0.24347371}
+  m_LocalScale: {x: 4.9187713, y: 8.929352, z: 4.2400637}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1212146237}

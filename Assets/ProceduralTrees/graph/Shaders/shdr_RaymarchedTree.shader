@@ -148,10 +148,11 @@ Shader "Vegetation/RaymarchedTree"
                     SdfResult result = SegmentSDF(localPos,_segments_ls[i]);
                     float oldDistance = hit.distance;
                     
-                    hit.distance = smooth_min(hit.distance,result.sdf,_smoothing*_segments_ls[i].radiusA);
+                    float smoothingRadius = _smoothing*_segments_ls[i].radiusA;
+                    hit.distance = smooth_min(hit.distance,result.sdf,smoothingRadius);
                     if (oldDistance > result.sdf)
                     {
-                        hit.smoothFactor =  abs(hit.distance-result.sdf)/(_smoothing*_segments_ls[i].radiusA);
+                        hit.smoothFactor =  abs(hit.distance-result.sdf)/smoothingRadius;
                         hit.secondClosestSegID = hit.segID;
                         hit.segID = i;
                     }
@@ -291,14 +292,12 @@ Shader "Vegetation/RaymarchedTree"
                 float2 uv;
                 uv.x = angle/PI/2;// * _segments_ls[sceneHit.segID].radius/_segments_ls[0].radius;
                 uv.y = -lerp(closestHit.t,SecondClosestHit.t,sceneHit.smoothFactor);
-
-                
                 
                 //lighting
                 output.color = ShadeTree(
                     mul((float3x3)_treeTransform_ls_to_ws,normal),
                     mul((float3x3)_treeTransform_ls_to_ws,localRayDirection),
-                    uv);
+                    uv)*_segments_ls[sceneHit.segID].age;
                 
                 //write to depth
                 float4 linearDepth = TransformWorldToHClip(mul(_treeTransform_ls_to_ws,float4( samplePoint,1)));
