@@ -289,7 +289,7 @@ Shader "Vegetation/RaymarchedTree"
                 float angle = FastAngle(normal,referenceVector);
                 
                 float2 uv;
-                uv.x = angle/PI/2 * _segments_ls[sceneHit.segID].radius/_segments_ls[0].radius;
+                uv.x = angle/PI/2;// * _segments_ls[sceneHit.segID].radius/_segments_ls[0].radius;
                 uv.y = -lerp(closestHit.t,SecondClosestHit.t,sceneHit.smoothFactor);
 
                 
