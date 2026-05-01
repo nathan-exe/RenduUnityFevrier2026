@@ -82,7 +82,6 @@ namespace NathanTazi
         /// <param name="bounds"></param>
         void UpdateMaterialValues()
         {
-            
             MaterialPropertyBlock materialBlock = new MaterialPropertyBlock();
             print("bbMin : " +generator.BoundingBoxLs.min);
             materialBlock.SetVector(BoundingBoxMinLsShaderProperty, generator.BoundingBoxLs.min);

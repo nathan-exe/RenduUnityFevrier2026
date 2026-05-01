@@ -11,8 +11,10 @@ struct Segment
 struct SdfResult
 {
     float sdf;//la distance signée avec le segment
-    float3 t;//distance AH
-    float3 h;//le point projeté sur le centre du segment
+    float clampedT;//distance AH
+    float unclampedT;//distance AH
+    float3 clampedH;//le point projeté sur le centre du segment
+    float3 unclampedH;//le point projeté sur le centre du segment
 };
 
 struct SceneHit

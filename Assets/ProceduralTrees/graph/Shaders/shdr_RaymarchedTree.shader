@@ -126,11 +126,19 @@ Shader "Vegetation/RaymarchedTree"
                 // on retourne la distance entre H et M - le rayon de la capsule.
                 float3 AM = localPos - segment.a;
                 float3 AB = segment.b - segment.a;
-                
-                output.t =  saturate(dot(AB,AM)/ dot(AB,AB)); // t : la longueur normalisée de la projection de M sur le segment AB 
-                output.h  = segment.a + AB * (output.t);
 
-                output.sdf =  length(localPos - output.h) - lerp(segment.radiusA, segment.RadiusB, output.t);
+                // output.t =  saturate(dot(AB,AM)/ dot(AB,AB));
+                // output.h  = segment.a + AB * (output.t);
+                // output.sdf =  length(localPos - output.h) - lerp(segment.radiusA, segment.RadiusB, output.t);
+                // return output;
+                
+                output.unclampedT = dot(AB,AM)/ dot(AB,AB);
+                output.unclampedH  = segment.a + AB * output.unclampedT;
+                output.clampedT = saturate(output.unclampedT); // t : la longueur normalisée de la projection de M sur le segment AB 
+
+                output.clampedH = segment.a + AB * (output.clampedT);
+                output.sdf =  length(localPos - output.clampedH) - lerp(segment.radiusA, segment.RadiusB, output.clampedT);
+                
                 return output;
             }
             
@@ -143,14 +151,17 @@ Shader "Vegetation/RaymarchedTree"
                 SceneHit hit;
                 hit.distance = 1000;
                 hit.segID = 0;
+                float oldSDF=10000;
                 for (int i = 0; i<_segmentCount && hit.distance>_threshold && _segments_ls[i].radiusA>minBranchRadius;i++)
                 {
                     SdfResult result = SegmentSDF(localPos,_segments_ls[i]);
                     float oldDistance = hit.distance;
                     
                     float smoothingRadius = _smoothing*_segments_ls[i].radiusA;
+
                     hit.distance = smooth_min(hit.distance,result.sdf,smoothingRadius);
-                    if (oldDistance > result.sdf)
+                    if (oldDistance > result.sdf && abs(oldDistance - result.sdf)>.001)
+
                     {
                         hit.smoothFactor =  abs(hit.distance-result.sdf)/smoothingRadius;
                         hit.secondClosestSegID = hit.segID;
@@ -202,6 +213,7 @@ Shader "Vegetation/RaymarchedTree"
 
             float4 ShadeTree(float3 normalWs, float3 rayDirectionWs, float2 uv)
             {
+                //return float4(normalWs,1);
                 //light
                 float lambert = saturate(dot(normalWs,_MainLightPosition));
                 float specular = pow(saturate(dot(reflect(_MainLightPosition, normalWs), rayDirectionWs)), 2);
@@ -279,7 +291,7 @@ Shader "Vegetation/RaymarchedTree"
                 //compute normal
                 SdfResult closestHit =  SegmentSDF(samplePoint,_segments_ls[sceneHit.segID]);
                 SdfResult SecondClosestHit = SegmentSDF(samplePoint,_segments_ls[sceneHit.secondClosestSegID]);
-                float3 normal = normalize(samplePoint-lerp(closestHit.h,SecondClosestHit.h,sceneHit.smoothFactor));
+                float3 normal = (samplePoint-lerp(closestHit.unclampedH,SecondClosestHit.unclampedH,sceneHit.smoothFactor));
 
                 //compute UV
                 float3 mainSegmentDir = (_segments_ls[sceneHit.segID].b-_segments_ls[sceneHit.segID].a);
@@ -288,18 +300,20 @@ Shader "Vegetation/RaymarchedTree"
                 float3 dir = normalize(lerp(mainSegmentDir,secondSegmentDir,sceneHit.smoothFactor));
                 referenceVector = normalize(projectOnPlane(referenceVector,dir));
                 float angle = FastAngle(normal,referenceVector);
-                
                 float2 uv;
                 uv.x = angle/PI/2;// * _segments_ls[sceneHit.segID].radius/_segments_ls[0].radius;
-                uv.y = -lerp(closestHit.t,SecondClosestHit.t,sceneHit.smoothFactor);
+                uv.y = -lerp(closestHit.clampedT,SecondClosestHit.clampedT,sceneHit.smoothFactor);
 
-                float age = lerp(_segments_ls[sceneHit.segID].age,_segments_ls[sceneHit.secondClosestSegID].age,sceneHit.smoothFactor);
+                //compute age
+                float age =  lerp(_segments_ls[sceneHit.segID].age,_segments_ls[sceneHit.secondClosestSegID].age,sceneHit.smoothFactor);
                 
                 //lighting
                 output.color = ShadeTree(
-                    mul((float3x3)_treeTransform_ls_to_ws,normal),
+                    normalize(mul((float3x3)_treeTransform_ls_to_ws,normal)),
                     mul((float3x3)_treeTransform_ls_to_ws,localRayDirection),
                     uv)*(1+age*.2);
+
+                //output.color = float4(sceneHit.smoothFactor,sceneHit.smoothFactor,sceneHit.smoothFactor,1);
                 
                 //write to depth
                 float4 linearDepth = TransformWorldToHClip(mul(_treeTransform_ls_to_ws,float4( samplePoint,1)));
@@ -313,242 +327,165 @@ Shader "Vegetation/RaymarchedTree"
             
             ENDHLSL
         }
-        
 
 //shadow pass
-//Pass
-//        {
-//            Tags {"LightMode"="ShadowCaster" }
-//            
-//            // The HLSL code block. Unity SRP uses the HLSL language.
-//            HLSLPROGRAM
-//            // This line defines the name of the vertex shader.
-//            #pragma vertex vertex
-//            // This line defines the name of the fragment shader.
-//            #pragma fragment frag
-//            
-//            // hlsl includes
-//            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-//            #include "ShaderHelpers.hlsl"
-//
-//            // un segment défini par deux points et un rayon.
-//            struct Segment
-//            {
-//                half3 a,b;
-//                half radius;
-//                half age;
-//            };
-//            
-//            struct VertexAttributes
-//            {
-//                //vertex position in object space
-//                float4 positionOs   : POSITION;
-//            };
-//
-//            struct V2f
-//            {
-//                float4 positionCS  : SV_POSITION;
-//                float4 worldPos  : TEXCOORD0;
-//            };
-//
-//            //bounding box
-//            float3 _boundingBoxMin_ls;
-//            float3 _boundingBoxMax_ls;
-//
-//            //raymarching
-//            float _threshold;
-//            int _maxIterations;
-//            float _smoothing;
-//
-//            //scene
-//            StructuredBuffer<Segment> _segments_ls; //todo : binary space partitionning 
-//            int _segmentCount;
-//            matrix _treeTransform_ls_to_ws;
-//            
-//            float ComputeMaxRayLengthInBoundingBox(float3 origin,float3 direction,float3 boxMin, float3 boxMax){
-//                float3 T_1, T_2; // vectors to hold the T-values for every direction
-//                float t_near = -Max_float(); 
-//                float t_far = Max_float();
-//                
-//                for (int i = 0; i < 3; i++)
-//                { //we test slabs in every direction
-//                    if (direction[i] == 0)
-//                    { // ray parallel to planes in this direction
-//                        if ((origin[i] < boxMin[i]) || (origin[i] > boxMax[i]))
-//                        {
-//                            return false; // parallel AND outside box : no intersection possible
-//                        }
-//                    }
-//                    else
-//                    { // ray not parallel to planes in this direction
-//                        T_1[i] = (boxMin[i] - origin[i]) / direction[i];
-//                        T_2[i] = (boxMax[i] - origin[i]) / direction[i];
-//
-//                        if(T_1[i] > T_2[i]){ // we want T_1 to hold values for intersection with near plane
-//                            float temp = T_1[i];
-//                            T_1[i] = T_2[i];
-//                            T_2[i] = temp;
-//                        }
-//                        if (T_1[i] > t_near){
-//                            t_near = T_1[i];
-//                        }
-//                        if (T_2[i] < t_far){
-//                            t_far = T_2[i];
-//                        }
-//                        if( (t_near > t_far) || (t_far < 0) ){
-//                            return false;
-//                        }
-//                    }
-//                }
-//               
-//                return t_far; // if we made it here, there was an intersection - YAY
-//
-//
-//            }
-//            
-//            bool is_in_bounding_box(float3 pos,float3 boxMin, float3 boxMax){ 
-//                return 
-//                pos.x <= boxMax.x && pos.x >= boxMin.x 
-//                && pos.y <= boxMax.y && pos.y >= boxMin.y 
-//                && pos.z <= boxMax.z && pos.z >= boxMin.z;
-//            }
-//
-//            struct SdfResult
-//            {
-//                float sdf;//la distance signée avec le segment
-//                float3 t;//distance AH
-//                float3 h;//le point projeté sur le centre du segment
-//            };
-//
-//            //retourne la distance signée avec un segment épaissis; une capsule
-//            //https://iquilezles.org/articles/distfunctions/
-//            SdfResult SegmentSDF(float3 pos,Segment segment)
-//            {
-//                SdfResult output;
-//                
-//                //H = le point M (world pos) projeté sur le segment AB.
-//                // on retourne la distance entre H et M - le rayon de la capsule.
-//                float3 A = segment.a;
-//                float3 B = segment.b;
-//                float3 AM = pos - A;
-//                float3 AB = B - A;
-//                float normeAB = length(AB);
-//                //float3 normalizedAB = normalize(ab);
-//                //float3 h = segment.a + (dot(normalizedAB,am) * normalizedAB) - worldpos;
-//
-//                float projectionLength = dot(AB,AM)/(normeAB * normeAB);
-//                projectionLength = saturate(projectionLength);
-//                float3 H = A + AB*(projectionLength);
-//
-//                output.t = projectionLength;
-//                output.h = H;
-//                output.sdf =  length(pos - H) - segment.radius;//todo : lerp(radiusA, radiusB, t)
-//                return output;
-//            }
-//
-//            struct SceneHit
-//            {
-//                float distance;
-//                int segID;
-//                int secondClosestSegID;
-//                float smoothFactor;
-//            };
-//
-//            //retourne la distance signée avec l'ensemble des branches de l'arbre
-//            SceneHit SceneSDF(float3 pos)
-//            {
-//                //todo : octree ou binary space partitionning pour éviter d'itérer à travers tous les segments.
-//                //todo : interpolation d'attributs entre les 2 segments les plus proches
-//                
-//                SceneHit hit;
-//                hit.distance = 1000000;
-//                hit.segID = 0;
-//                for (int i = 0; i<_segmentCount;i++)
-//                {
-//                    if (_segments_ls[i].radius<0.02) continue;
-//                    
-//                    SdfResult result = SegmentSDF(pos,_segments_ls[i]);
-//                    float oldDistance = hit.distance;
-//                    
-//                    
-//                    hit.distance = min(hit.distance,result.sdf);
-//                    if (oldDistance > result.sdf)
-//                    {
-//                        hit.segID = i;
-//                    }
-//                }
-//                
-//                return hit;
-//            }
-//            
-//            
-//            //== shader functions ==
-//
-//            //vertex shader
-//            V2f vertex(VertexAttributes IN)
-//            {
-//                V2f OUT; 
-//
-//                OUT.positionCS = TransformObjectToHClip(IN.positionOs.xyz);
-//                OUT.worldPos = mul(unity_ObjectToWorld,IN.positionOs);
-//                    
-//                // Returning the output. 
-//                return OUT;
-//            }
-//
-//            struct fragOutput
-//            {
-//                float depth : SV_Depth;
-//            };
-//            
-//            // fragment shader
-//            fragOutput frag(V2f IN) 
-//            {
-//                fragOutput output;
-//                
-//                //define bounding box
-//                float3 bbSize_ls = (_boundingBoxMax_ls - _boundingBoxMin_ls);
-//                float3 bbInvSize_ls = 1.0/bbSize_ls;
-//                
-//                //define ray
-//                
-//                
-//                const float3 rayDirection = normalize(_MainLightPosition.xyz);
-//                float3 rayOrigin = IN.worldPos.xyz-rayDirection*(length(bbSize_ls));
-//                const float maxRayLength = ComputeMaxRayLengthInBoundingBox(rayOrigin,rayDirection,_boundingBoxMin_ls ,_boundingBoxMax_ls);
-//                
-//                float rayLength = 0;
-//                //raymarching : on avance le long d'un rayon jusqu'à ce que la distance avec la scène soit quasi nulle.
-//                //https://iquilezles.org/articles/raymarchingdf/
-//                _maxIterations = _maxIterations/2;
-//                for (int i =0; i<_maxIterations;i++)
-//                {
-//                    float3 samplePoint = rayOrigin+rayDirection*rayLength;
-//                    SceneHit sceneHit = SceneSDF(samplePoint);
-//
-//                    //distance quasi nulle <=> surface touchée
-//                    if (sceneHit.distance<=_threshold*5)
-//                    {
-//                        //write to depth
-//                        float4 linearDepth = TransformWorldToHClip(samplePoint);
-//                        float depth = linearDepth.z / linearDepth.w;
-//                        output.depth = depth;
-//                        
-//                        return output;
-//                        
-//                        //return lerp( float4(1,0,0,1) , float4(color,1),_segments[sceneHit.segID].age);
-//                    }
-//                    
-//                    rayLength += sceneHit.distance;
-//                    clip((rayLength < maxRayLength)-.1);
-//                }
-//
-//                //nombre max de steps dépassé
-//                clip(-1);
-//                output.depth = 0;
-//                return output;
-//            }
-//            ENDHLSL
-//        }
+Pass
+        {
+            ZWrite On 
+            ZTest LEqual
+            Cull Back
+            Tags { "LightMode"="ShadowCaster"  "RenderType" = "Opaque" "Queue" = "Geometry"  "RenderPipeline" = "UniversalPipeline" }
+            
+            // The HLSL code block. Unity SRP uses the HLSL language.
+            HLSLPROGRAM
+            // This line defines the name of the vertex shader.
+            #pragma vertex vertex
+            // This line defines the name of the fragment shader.
+            #pragma fragment frag
+
+            // hlsl includes
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Raymarching.hlsl"
+            #include "ShaderHelpers.hlsl"
+
+            //bounding box
+            float4 _boundingBoxMin_ls;
+            float4 _boundingBoxMax_ls;
+
+            //raymarching
+            float _threshold;
+            int _maxIterations;
+            float _smoothing;
+
+            //scene
+            StructuredBuffer<Segment> _segments_ls; //todo : binary space partitionning 
+            int _segmentCount;
+            matrix _treeTransform_ls_to_ws;
+
+//retourne la distance signée avec un segment épaissis; une capsule
+            //https://iquilezles.org/articles/distfunctions/
+            SdfResult SegmentSDF(float3 localPos,Segment segment)
+            {
+                SdfResult output;
+                
+                //H = le point M (local pos) projeté sur le segment AB.
+                // on retourne la distance entre H et M - le rayon de la capsule.
+                float3 AM = localPos - segment.a;
+                float3 AB = segment.b - segment.a;
+                
+                output.clampedT =  saturate(dot(AB,AM)/ dot(AB,AB)); // t : la longueur normalisée de la projection de M sur le segment AB 
+                output.clampedH  = segment.a + AB * (output.clampedT);
+
+                output.sdf =  length(localPos - output.clampedH) - lerp(segment.radiusA, segment.RadiusB, output.clampedT);
+                return output;
+            }
+            
+            //retourne la distance signée avec l'ensemble des branches de l'arbre
+            float SceneSDF(float3 localPos, float minBranchRadius = 0)
+            {
+                //todo : octree ou binary space partitionning pour éviter d'itérer à travers tous les segments.
+                //todo : interpolation d'attributs entre les 2 segments les plus proches
+                float distance = 1000;
+                for (int i = 0; i<_segmentCount && distance>_threshold && _segments_ls[i].radiusA>minBranchRadius;i++)
+                {
+                    SdfResult result = SegmentSDF(localPos,_segments_ls[i]);
+                    distance = min(distance,result.sdf);
+                }
+                
+                return distance;
+            }
+            
+            //== shader functions ==
+
+            struct VertexAttributes
+            {
+                //vertex position in object space
+                float4 positionOs : POSITION;
+            };
+
+            struct V2f
+            {
+                float4 positionCS  : SV_POSITION;
+                float3 posLs  : TEXCOORD0;
+                float4 posWs  : TEXCOORD1;
+            };
+            
+            struct fragOutput
+            {
+                half4 color : SV_Target;
+                float depth : SV_Depth;
+            };
+
+            //vertex shader
+            V2f vertex(VertexAttributes vertex)
+            {
+                V2f OUT; 
+
+                OUT.positionCS = TransformObjectToHClip(vertex.positionOs.xyz);
+                OUT.posWs = mul(unity_ObjectToWorld,vertex.positionOs);
+                OUT.posLs =  mul(Inverse(_treeTransform_ls_to_ws), OUT.posWs);
+                    
+                // Returning the output. 
+                return OUT;
+            }
+            
+            // fragment shader
+            float frag(V2f IN) : SV_Depth 
+            {
+                // === pixel culling ===
+                
+                //on clip les backfaces
+                
+                /// === preparation raymarching ===
+                
+                //definition du rayon sur lequel on va se déplacer
+                const float3 localRayDirection = normalize(mul((float3x3)Inverse(_treeTransform_ls_to_ws),_MainLightPosition));// normalize(IN.worldPos.xyz- _WorldSpaceCameraPos.xyz );
+                float3 localRayOrigin = IN.posLs-localRayDirection*100;
+                const float maxRayLength = 1000;//ComputeMaxRayLengthInBoundingBox(localRayOrigin,localRayDirection,_boundingBoxMin_ls ,_boundingBoxMax_ls);
+ 
+                //const float3 rayDirection = normalize(_MainLightPosition.xyz);
+                //float3 rayOrigin = IN.posLs.xyz-rayDirection*(length(bbSize_ls));
+                //onst float maxRayLength = ComputeMaxRayLengthInBoundingBox(rayOrigin,rayDirection,_boundingBoxMin_ls ,_boundingBoxMax_ls);
+
+
+                float rayLength = 0;
+                
+                // === raymarching ===
+                
+                //on avance le long d'un rayon jusqu'à ce que la distance avec la scène soit quasi nulle.
+                //https://iquilezles.org/articles/raymarchingdf/
+                bool hitAnySegment = false;
+                float3 samplePoint;
+                float sdf;
+                for (int i =0; i<_maxIterations;i++)
+                {
+                    samplePoint = localRayOrigin+localRayDirection*rayLength;
+                    sdf = SceneSDF(samplePoint,0);
+
+                    //distance quasi nulle <=> surface touchée
+                    if (sdf<=_threshold)
+                    {
+                        hitAnySegment = true;
+                        break;
+                    }
+                    
+                    rayLength += sdf+_threshold;
+                    clip((maxRayLength-rayLength));
+                }
+                clip(hitAnySegment-.5f);
+                
+                //write to depth
+                float4 linearDepth = TransformWorldToHClip(mul(_treeTransform_ls_to_ws,float4( samplePoint,1)));
+                float depth = linearDepth.z / linearDepth.w;
+                return depth;
+                
+            }
+            
+            ENDHLSL
+        }
+
+ 
     }
 }
+
+
