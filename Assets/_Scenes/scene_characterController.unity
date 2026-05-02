@@ -6110,7 +6110,7 @@ Light:
   serializedVersion: 12
   m_Type: 1
   m_Color: {r: 1, g: 0.95686275, b: 0.8392157, a: 1}
-  m_Intensity: 4.57
+  m_Intensity: 1.62
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -6172,13 +6172,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 114151870}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.46320868, y: -0.2842616, z: 0.08537429, w: 0.8350715}
+  m_LocalRotation: {x: 0.15766895, y: -0.86532354, z: 0.44383746, w: 0.17135963}
   m_LocalPosition: {x: 0, y: 3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 957327094}
-  m_LocalEulerAnglesHint: {x: 55.302, y: -44.032, z: -12.247}
+  m_LocalEulerAnglesHint: {x: 55.302, y: -164.032, z: -12.247}
 --- !u!114 &114151873
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -32319,7 +32319,7 @@ MonoBehaviour:
     baseRadius: 0.46
     growthThisStep: 1
     totalGrowth: 1
-    enableBranchReduction: 0
+    enableBranchReduction: 1
   _axiom: x
   totalGrowth: 1
   iterations: 3
@@ -106009,7 +106009,7 @@ MonoBehaviour:
     baseRadius: 0.46
     growthThisStep: 1
     totalGrowth: 1
-    enableBranchReduction: 0
+    enableBranchReduction: 1
   _axiom: x
   totalGrowth: 1
   iterations: 2
