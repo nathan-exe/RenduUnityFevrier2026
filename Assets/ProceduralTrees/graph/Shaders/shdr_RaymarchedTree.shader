@@ -149,26 +149,37 @@ Shader "Vegetation/RaymarchedTree"
                 //todo : interpolation d'attributs entre les 2 segments les plus proches
                 
                 SceneHit hit;
-                hit.distance = 1000;
+                hit.distance = 100;
                 hit.segID = 0;
-                float oldSDF=10000;
+
+                float minSdf = 100;
+                float minSdf2 = 101;
                 for (int i = 0; i<_segmentCount && hit.distance>_threshold && _segments_ls[i].radiusA>minBranchRadius;i++)
                 {
-                    SdfResult result = SegmentSDF(localPos,_segments_ls[i]);
-                    float oldDistance = hit.distance;
+                    SdfResult sdfSample = SegmentSDF(localPos,_segments_ls[i]);
                     
                     float smoothingRadius = _smoothing*_segments_ls[i].radiusA;
-
-                    hit.distance = smooth_min(hit.distance,result.sdf,smoothingRadius);
-                    if (oldDistance > result.sdf && abs(oldDistance - result.sdf)>.001)
-
+                    float smoothMinResult = smooth_min(hit.distance,sdfSample.sdf,smoothingRadius);
+                    hit.distance = smoothMinResult;
+                    
+                    if (smoothMinResult<minSdf)//&& abs(oldDistance - result.sdf)>.001)
                     {
-                        hit.smoothFactor =  abs(hit.distance-result.sdf)/smoothingRadius;
-                        hit.secondClosestSegID = hit.segID;
+                        if (minSdf<minSdf2)
+                        {
+                            minSdf2 = minSdf;
+                            hit.secondClosestSegID = hit.segID;
+                        }
+                        
                         hit.segID = i;
+                        minSdf = smoothMinResult;
+                        
+                    }else if (smoothMinResult < minSdf2)
+                    {
+                        hit.secondClosestSegID = i;
+                        minSdf2 = smoothMinResult;
                     }
                 }
-                
+                hit.smoothFactor = 0;
                 return hit;
             }
             
@@ -242,7 +253,6 @@ Shader "Vegetation/RaymarchedTree"
 
                 //on fait une premiere etape de raymarching en 2D, screenspace pour clip tous les pixels de la bb qui ne toucheront aucune branche. -> -5fps
                 //clip(-SceneSDF_2D(IN.posWs)+.01);
-
                 
                 /// === preparation raymarching ===
                 
@@ -287,25 +297,28 @@ Shader "Vegetation/RaymarchedTree"
                 clip(hitAnySegment-.5f);
                 
                 // === shading du pixel ===
-                
-                //compute normal
                 SdfResult closestHit =  SegmentSDF(samplePoint,_segments_ls[sceneHit.segID]);
                 SdfResult SecondClosestHit = SegmentSDF(samplePoint,_segments_ls[sceneHit.secondClosestSegID]);
-                float3 normal = (samplePoint-lerp(closestHit.unclampedH,SecondClosestHit.unclampedH,sceneHit.smoothFactor));
+                float distanceBetweenTwoClosestHits = distance(closestHit.clampedH, SecondClosestHit.clampedH);
+                float prev = saturate(1.0f-distanceBetweenTwoClosestHits*10);
+                
+                //compute normal
+                
+                float3 normal = (samplePoint-lerp(closestHit.unclampedH,SecondClosestHit.unclampedH,prev));
 
                 //compute UV
                 float3 mainSegmentDir = (_segments_ls[sceneHit.segID].b-_segments_ls[sceneHit.segID].a);
                 float3 secondSegmentDir = (_segments_ls[sceneHit.secondClosestSegID].b-_segments_ls[sceneHit.secondClosestSegID].a);
                 float3 referenceVector = float3(0,1,0);//normalize(_segments_ls[sceneHit.secondClosestSegID].b-_segments_ls[sceneHit.secondClosestSegID].a);
-                float3 dir = normalize(lerp(mainSegmentDir,secondSegmentDir,sceneHit.smoothFactor));
+                float3 dir = normalize(lerp(mainSegmentDir,secondSegmentDir,prev));
                 referenceVector = normalize(projectOnPlane(referenceVector,dir));
                 float angle = FastAngle(normal,referenceVector);
                 float2 uv;
                 uv.x = angle/PI/2;// * _segments_ls[sceneHit.segID].radius/_segments_ls[0].radius;
-                uv.y = -lerp(closestHit.clampedT,SecondClosestHit.clampedT,sceneHit.smoothFactor);
+                uv.y = -lerp(closestHit.clampedT,SecondClosestHit.clampedT,prev);
 
                 //compute age
-                float age =  lerp(_segments_ls[sceneHit.segID].age,_segments_ls[sceneHit.secondClosestSegID].age,sceneHit.smoothFactor);
+                float age =  lerp(_segments_ls[sceneHit.segID].age,_segments_ls[sceneHit.secondClosestSegID].age,prev);
                 
                 //lighting
                 output.color = ShadeTree(
@@ -313,7 +326,9 @@ Shader "Vegetation/RaymarchedTree"
                     mul((float3x3)_treeTransform_ls_to_ws,localRayDirection),
                     uv)*(1+age*.2);
 
-                //output.color = float4(sceneHit.smoothFactor,sceneHit.smoothFactor,sceneHit.smoothFactor,1);
+                
+                output.color = float4(age,age,age,1);
+                //output.color = float4(SecondClosestHit.clampedH,1);
                 
                 //write to depth
                 float4 linearDepth = TransformWorldToHClip(mul(_treeTransform_ls_to_ws,float4( samplePoint,1)));

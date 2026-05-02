@@ -18,5 +18,15 @@ namespace _scripts.Extensions
             averageOfValues = newAverage;
         }
 
+        public static float RemapRange(ref this float v, float fromA, float fromB, float toA, float toB)
+        {
+            return (v - fromA) / (fromB - fromA) * (toB - toA) + toA;
+        }
+        
+        public static float RemapRange(ref this float v, float toA, float toB)
+        {
+            return v * (toB - toA) + toA;
+        }
+
     }
 }

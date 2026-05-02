@@ -18,7 +18,11 @@ namespace NathanTazi
         [SerializeField] protected string _axiom;//l'étape 0 de la simulation.
         [SerializeField][Range(0,1)] protected float totalGrowth;
         [SerializeField][Range(0,6)] protected int iterations = 5;
-    
+
+        [Header("Shape")]
+        [SerializeField] private Vector2 radiusRangeOverLife = Vector2.one;
+        
+        
         /// <summary>
         /// recalcule toute la structure de l'arbre
         /// </summary>
@@ -31,6 +35,9 @@ namespace NathanTazi
             lsystem._rules.ParseRulesDictionnary();
 
             lsystem.growthThisStep = (totalGrowth * iterations-.0001f)%1f+.0001f;
+            lsystem.totalGrowth = totalGrowth;
+            lsystem.baseRadius = Mathf.Lerp(radiusRangeOverLife.x, radiusRangeOverLife.y, totalGrowth);
+            
             lsystem.Simulate(Mathf.CeilToInt(iterations*totalGrowth));
             
             Graph = lsystem.ComputeGraph();
@@ -91,6 +98,7 @@ public class LsystemGeneratorEditor : Editor
                 ,style);
             
             base.OnInspectorGUI();
+            
             GUILayout.Space(5);
             if (GUILayout.Button("ReSeed"))
             {

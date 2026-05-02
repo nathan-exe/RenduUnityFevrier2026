@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using _scripts.Extensions;
 using UnityEngine;
 using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
@@ -33,11 +34,11 @@ namespace NathanTazi
         [SerializeField] [Range(0,1)] public float verticalAngleBiasStrength;
         [SerializeField] public float baseRadius;
         [SerializeField][Range(0,1)][FormerlySerializedAs("growth")] public float growthThisStep;
+        public float totalGrowth;
         
         [Header("Algorithm")]
-        [SerializeField] public int seed;
         [SerializeField] bool enableBranchReduction;
-    
+        
         //constructors
         public Lsystem3D(string axiom) : base(axiom)
         {
@@ -93,43 +94,57 @@ namespace NathanTazi
             public float currentRadius;
             public float oldRadius;
         }
-        
+
+        protected override bool SymbolUsesRandomValues(char s)
+        {
+            return s is 'f' or 'x' or '-' or '+' or ':' or '.' or '<' or '>';
+        }
+
         /// <summary>
         /// computes a local space graph structure from the simulated set of symbols. 
         /// </summary>
         /// <returns></returns>
         public override PlantGraph ComputeGraph()
         {
-            Random.InitState(seed);
+            int randomIndex = 0;
+            
             Turtle turtle = new Turtle(baseRadius);
             turtle.transform = Matrix4x4.identity;
         
             Stack<Turtle> stack = new Stack<Turtle>();
-        
             PlantGraph plantGraph = new();
-            bool isNewSegment = false;
 
             Vector3 plantStart = Vector3.zero;
+            bool isNewSegment = false;
         
             int i = 0;
             int lastSymbolID = Symbols.Length;
+            RandomValueSet random = new();
             
             foreach (char symbol in Symbols)
             {
+                if (SymbolUsesRandomValues(symbol))
+                    random = RandomValues[randomIndex++];
                 
                 bool foundSymbol = true;
+                //float symbolStrength = totalGrowth;//isNewSegment ? growthThisStep : 1;
+                float symbolStrength = isNewSegment ? growthThisStep : 1;
                 switch (symbol)
                 {
                     // 'f' : go forward
                     case 'f': {
                         if (!enableBranchReduction||(i == lastSymbolID || i==0 || PreviousNonParenthesisCharacter(Symbols,i)!='f'))
                             plantStart = turtle.point;
+
                         turtle.transform = turtle.transform * Matrix4x4.Rotate(
-                            Quaternion.Euler(Random.Range(-angleRandomness, angleRandomness),
-                                Random.Range(-angleRandomness, angleRandomness),
-                                Random.Range(-angleRandomness, angleRandomness)));
+                        Quaternion.Euler(new Vector3(
+                            random.r0.RemapRange(-angleRandomness, angleRandomness),
+                            random.r1.RemapRange(-angleRandomness, angleRandomness),
+                            random.r2.RemapRange(-angleRandomness, angleRandomness)
+                            ) * symbolStrength)
+                        );
+                        float actualStepSize = (StepSize.x + random.r3 * StepSize.y ) * symbolStrength;
                         
-                        float actualStepSize = (StepSize.x + Random.value * StepSize.y ) * (isNewSegment ? growthThisStep : 1);
                         turtle.point += turtle.direction * actualStepSize ;
                         if (!enableBranchReduction||(i == lastSymbolID || (NextNonParenthesisCharacter(Symbols,i) != 'f' )))
                             //&& !(i < lastSymbolID-1 && (Symbols[i + 1] == '(' || Symbols[i + 1] == '(')&&Symbols[i + 2] == 'f' ) ))
@@ -137,19 +152,32 @@ namespace NathanTazi
                             Vector3 b = turtle.point;
                             plantGraph.segments.Add(new Segment(plantStart, b, turtle.oldRadius,turtle.currentRadius,turtle.traveledDistance));
                             turtle.oldRadius = turtle.currentRadius;
-                            
                         }
                     
                         break;}
                 
                     // 'x' : go forward and draw leaf
                     case 'x': {
-                        Vector3 a = turtle.point;
-                        float actualStepSize = (StepSize.x + Random.value * StepSize.y ) * (isNewSegment ? growthThisStep : 1);
-                        turtle.point += turtle.direction * actualStepSize;
-                        Vector3 b = turtle.point;
-                        plantGraph.segments.Add(new Segment(plantStart, b, turtle.oldRadius,turtle.currentRadius,turtle.traveledDistance));
-                        turtle.oldRadius = turtle.currentRadius;
+                        if (!enableBranchReduction||(i == lastSymbolID || i==0 || PreviousNonParenthesisCharacter(Symbols,i)!='f'))
+                            plantStart = turtle.point;
+
+                        turtle.transform = turtle.transform * Matrix4x4.Rotate(
+                            Quaternion.Euler(new Vector3(
+                                random.r0.RemapRange(-angleRandomness, angleRandomness),
+                                random.r1.RemapRange(-angleRandomness, angleRandomness),
+                                random.r2.RemapRange(-angleRandomness, angleRandomness)
+                            ) * symbolStrength)
+                        );
+                        float actualStepSize = (StepSize.x + random.r3 * StepSize.y ) * symbolStrength;
+                        
+                        turtle.point += turtle.direction * actualStepSize ;
+                        if (!enableBranchReduction||(i == lastSymbolID || (NextNonParenthesisCharacter(Symbols,i) != 'f' )))
+                            //&& !(i < lastSymbolID-1 && (Symbols[i + 1] == '(' || Symbols[i + 1] == '(')&&Symbols[i + 2] == 'f' ) ))
+                        {
+                            Vector3 b = turtle.point;
+                            plantGraph.segments.Add(new Segment(plantStart, b, turtle.oldRadius,turtle.currentRadius,turtle.traveledDistance));
+                            turtle.oldRadius = turtle.currentRadius;
+                        }
                         
                         plantGraph.leaves.Add(new(
                             turtle.point,
@@ -160,32 +188,49 @@ namespace NathanTazi
                 
                     // '-' : turn down
                     case '-' :
-                        turtle.transform = turtle.transform * Matrix4x4.Rotate( Quaternion.Euler(-(PitchAngleRange.x + Random.Range(-PitchAngleRange.y,PitchAngleRange.y)),0,0));
+                        turtle.transform = turtle.transform * Matrix4x4.Rotate( Quaternion.Euler(
+                            new Vector3(-(PitchAngleRange.x + random.r0.RemapRange(-PitchAngleRange.y,PitchAngleRange.y)),0,0)
+                            * symbolStrength));
                         break;
                 
                     // '+' : turn up
                     case '+' :
-                        turtle.transform = turtle.transform * Matrix4x4.Rotate( Quaternion.Euler(PitchAngleRange.x + Random.Range(-PitchAngleRange.y,PitchAngleRange.y),0,0));
+                        turtle.transform = turtle.transform * Matrix4x4.Rotate(
+                            Quaternion.Euler(
+                                new Vector3(PitchAngleRange.x + random.r0.RemapRange(-PitchAngleRange.y,PitchAngleRange.y),0,0)
+                                * symbolStrength));
                         break;
                 
                     //'<' : turn left
                     case '<' :
-                        turtle.transform = turtle.transform * Matrix4x4.Rotate( Quaternion.Euler(0, -(YawAngleRange.x + Random.Range(-YawAngleRange.y,YawAngleRange.y)),0));
+                        turtle.transform = turtle.transform * Matrix4x4.Rotate( 
+                            Quaternion.Euler(
+                                new Vector3(0, -(YawAngleRange.x + random.r0.RemapRange(-YawAngleRange.y,YawAngleRange.y)),0)
+                                * symbolStrength));
                         break;
                 
                     //'>' : turn right
                     case '>' :
-                        turtle.transform = turtle.transform * Matrix4x4.Rotate( Quaternion.Euler(0, (YawAngleRange.x + Random.Range(-YawAngleRange.y,YawAngleRange.y)),0));
+                        turtle.transform = turtle.transform * Matrix4x4.Rotate(
+                            Quaternion.Euler(
+                                new Vector3(0, YawAngleRange.x + random.r0.RemapRange(-YawAngleRange.y,YawAngleRange.y),0)
+                                * symbolStrength));
                         break;
                 
                     // '.' : turn down
                     case '.' :
-                        turtle.transform = turtle.transform * Matrix4x4.Rotate( Quaternion.Euler(0, 0,-(RollAngleRange.x + Random.Range(-RollAngleRange.y,RollAngleRange.y))));
+                        turtle.transform = turtle.transform * Matrix4x4.Rotate(
+                           Quaternion.Euler(
+                               new Vector3(0, 0, -(RollAngleRange.x + random.r0.RemapRange(-RollAngleRange.y,RollAngleRange.y)))
+                               * symbolStrength));
                         break;
                 
                     // ':' : turn up
                     case ':' :
-                        turtle.transform = turtle.transform * Matrix4x4.Rotate( Quaternion.Euler(0, 0,(RollAngleRange.x + Random.Range(-RollAngleRange.y,RollAngleRange.y))));
+                        turtle.transform = turtle.transform * Matrix4x4.Rotate( 
+                           Quaternion.Euler(
+                               new Vector3(0, 0, RollAngleRange.x + random.r0.RemapRange(-RollAngleRange.y,RollAngleRange.y))
+                               * symbolStrength));
                         break;
                     
                     case 'u' :
@@ -233,7 +278,7 @@ namespace NathanTazi
                         turtle.currentRadius *= (1.0f - 1.0f/number);
                     }
                 }
-
+                
                 i++;
             }
         
