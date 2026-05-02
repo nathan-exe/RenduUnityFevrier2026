@@ -6109,7 +6109,7 @@ Light:
   m_Enabled: 1
   serializedVersion: 12
   m_Type: 1
-  m_Color: {r: 1, g: 0.95686275, b: 0.8392157, a: 1}
+  m_Color: {r: 0.7735849, g: 0.5763996, b: 0.52910286, a: 1}
   m_Intensity: 1.62
   m_Range: 10
   m_SpotAngle: 30
@@ -68003,8 +68003,8 @@ Transform:
   m_GameObject: {fileID: 1076462077}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.5728028, y: 8.375745, z: -0.41956544}
-  m_LocalScale: {x: 6.7577214, y: 17.671488, z: 10.012632}
+  m_LocalPosition: {x: 0.026402473, y: 8.285484, z: 2.9690344}
+  m_LocalScale: {x: 6.7277045, y: 17.490967, z: 6.858069}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1647534641}
@@ -106002,7 +106002,7 @@ MonoBehaviour:
     seed: 1096478183
     StepSize: {x: 0.6, y: 1}
     angleRandomness: 10.94
-    YawAngleRange: {x: 46.36, y: 360}
+    YawAngleRange: {x: 0, y: 180}
     PitchAngleRange: {x: 19.9, y: 4.9}
     RollAngleRange: {x: -45.5, y: 0}
     verticalAngleBiasStrength: 0.534
@@ -106013,7 +106013,7 @@ MonoBehaviour:
   _axiom: x
   totalGrowth: 1
   iterations: 2
-  radiusRangeOverLife: {x: 0.02, y: 0.46}
+  radiusRangeOverLife: {x: 0.1, y: 0.46}
 --- !u!4 &1647534641
 Transform:
   m_ObjectHideFlags: 0

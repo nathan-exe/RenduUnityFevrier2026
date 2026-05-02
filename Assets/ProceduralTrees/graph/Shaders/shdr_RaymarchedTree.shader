@@ -327,7 +327,7 @@ Shader "Vegetation/RaymarchedTree"
                 output.color = ShadeTree(
                     normal,
                     mul((float3x3)_treeTransform_ls_to_ws,localRayDirection),
-                    uv*.5);
+                    uv*.5)*(age*.15+1);
 
                 //output.color = float4(t.xxx,1);
                 //output.color = float4(uv*.3,0,1);
