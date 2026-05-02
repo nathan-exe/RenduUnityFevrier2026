@@ -301,18 +301,20 @@ Shader "Vegetation/RaymarchedTree"
                 
                 // === shading du pixel ===
                 SdfResult closestHit =  SegmentSDF(samplePoint,_segments_ls[sceneHit.segID]);
+                SdfResult secondClosestHit =  SegmentSDF(samplePoint,_segments_ls[sceneHit.secondClosestSegID]);
+                float t = 1.0-saturate(distance(closestHit.clampedH, secondClosestHit.clampedH)*5);
                 
                 //compute normal
                 
-                //float3 normal = (samplePoint-lerp(closestHit.unclampedH,SecondClosestHit.unclampedH,prev));
-                float3 normal = normalize(mul(_treeTransform_ls_to_ws,(samplePoint-closestHit.unclampedH)));//computeNormalWs(samplePoint);
+                //float3 normal = normalize(mul(_treeTransform_ls_to_ws,(samplePoint-closestHit.unclampedH)));
+                float3 normal = normalize(mul(_treeTransform_ls_to_ws,samplePoint-lerp(closestHit.unclampedH,secondClosestHit.unclampedH,t)));
 
                 //compute age
                 float age =  _segments_ls[sceneHit.segID].age
-                            +closestHit.unclampedT*distance(_segments_ls[sceneHit.segID].a,_segments_ls[sceneHit.segID].b);
-                
+                    + closestHit.unclampedT*distance(_segments_ls[sceneHit.segID].a,_segments_ls[sceneHit.segID].b);
                 //compute UV
                 const float3 mainSegmentDir = (_segments_ls[sceneHit.segID].b-_segments_ls[sceneHit.segID].a);
+
                 float3 referenceVector = float3(0,1,0);//normalize(_segments_ls[sceneHit.secondClosestSegID].b-_segments_ls[sceneHit.secondClosestSegID].a);
                 const float3 dir = normalize(mainSegmentDir);
                 referenceVector = normalize(projectOnPlane(referenceVector,dir));
@@ -320,9 +322,6 @@ Shader "Vegetation/RaymarchedTree"
                 float2 uv = 0;
                 uv.x = angle/PI/2;// * _segments_ls[sceneHit.segID].radius/_segments_ls[0].radius;
                 uv.y = age;
-
-                
-                
                 
                 //lighting
                 output.color = ShadeTree(
@@ -330,8 +329,7 @@ Shader "Vegetation/RaymarchedTree"
                     mul((float3x3)_treeTransform_ls_to_ws,localRayDirection),
                     uv*.5);
 
-                float t = (float)sceneHit.segID/_segmentCount;
-                //output.color = float4(normal,1);
+                //output.color = float4(t.xxx,1);
                 //output.color = float4(uv*.3,0,1);
                 //output.color = float4(samplePoint*2%1,1);
                 //output.color = float4(float3(sceneHit.distance,sceneHit.distance,sceneHit.distance)*10,1);
