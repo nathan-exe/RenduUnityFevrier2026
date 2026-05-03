@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using _scripts.Extensions;
+using Unity.VisualScripting.FullSerializer;
 using UnityEngine;
 using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
@@ -161,6 +162,7 @@ namespace NathanTazi
                         if (!enableBranchReduction||(i == lastSymbolID || i==0 || PreviousNonParenthesisCharacter(Symbols,i)!='f'))
                             plantStart = turtle.point;
 
+                        
                         turtle.transform = turtle.transform * Matrix4x4.Rotate(
                             Quaternion.Euler(new Vector3(
                                 random.r0.RemapRange(-angleRandomness, angleRandomness),
@@ -182,7 +184,7 @@ namespace NathanTazi
                         plantGraph.leaves.Add(new(
                             turtle.point,
                             turtle.transform,
-                            turtle.currentRadius/baseRadius));
+                            turtle.currentRadius*symbolStrength));
                         
                         break; }
                 
@@ -238,7 +240,7 @@ namespace NathanTazi
                             Quaternion.Slerp(
                                 Quaternion.LookRotation(turtle.transform*Vector3.forward,turtle.direction),
                                 Quaternion.LookRotation(Vector3.ProjectOnPlane( turtle.transform*Vector3.forward,Vector3.up).normalized,Vector3.up),
-                                verticalAngleBiasStrength)
+                                verticalAngleBiasStrength * symbolStrength)
                             );
                         break;
                 

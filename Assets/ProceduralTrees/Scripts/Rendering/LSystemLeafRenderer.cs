@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using NathanTazi;
 using UnityEditor;
 using UnityEngine;
@@ -19,7 +20,8 @@ namespace NathanTazi
 
         [SerializeField]
         private Mesh _leafMesh;
-
+        [SerializeField]
+        private Transform _leafParent;
         [SerializeField]
         private Material _leafMaterial;
 
@@ -29,7 +31,7 @@ namespace NathanTazi
         void InstantiateLeaf()
         {
             GameObject go = new GameObject("Leaf");
-            go.transform.parent = transform;
+            go.transform.parent = _leafParent;
             go.AddComponent<MeshRenderer>().material = _leafMaterial;
             go.AddComponent<MeshFilter>().sharedMesh = _leafMesh;
             _leaves.Add(go.transform);
@@ -48,44 +50,54 @@ namespace NathanTazi
                 Mathf.InverseLerp(leafSizeRemap.x, leafSizeRemap.y, info.size))
                 * Vector3.one;
         }
-
-        void RegenerateLeafList()
-        {
-            int childCount = transform.childCount;
-            for (int i = 0; i<childCount;i++)
-            {
-                DestroyImmediate(transform.GetChild(0).gameObject);
-            }
-            
-            _leaves.Clear();
-            for (int i = 0; i < _generator.Graph.leaves.Count; i++)
-            {
-                InstantiateLeaf();
-            }
-        }
+        
         
         
         public void UpdateLeaves()
         {
-            RegenerateLeafList();
+            _leaves.RemoveAll(t => !t);
+            print(_generator.Graph);
+            print(_generator.Graph.leaves);
+            print(_leaves);
             //_generator.Graph.leaves
-            //if(_generator.Graph.leaves.Count!=_leaves.Count || transform.childCount!=_leaves.Count)
-                //RegenerateLeafList();
+            if (_generator.Graph.leaves.Count != _leaves.Count)
+            {
+                int diff = _generator.Graph.leaves.Count - _leaves.Count;
+                if (diff > 0)
+                {
+                    for (int i = 0; i < diff; i++)
+                    {
+                        InstantiateLeaf();
+                    }
+                }
+                else
+                {
+                    int endIndex = _leaves.Count + diff;
+                    for (int i = _leaves.Count - 1; i >= endIndex; i--)
+                    {
+                        DestroyImmediate(_leaves[i].gameObject);
+                        _leaves.RemoveAt(i);
+                    }
+                }
+            }
 
-            for (var i = 0; i < _leaves.Count; i++)
+            for (int i = 0; i < _leaves.Count; i++)
             {
                 UpdateLeaf(_leaves[i],_generator.Graph.leaves[i]);
             }
         }
         
-        private void OnValidate() 
+        private async void OnValidate() 
         {
-            //UpdateLeaves();
+            _leafParent ??= transform;
+            await Task.Yield();
+            UpdateLeaves();
         }
         
-        void OnLSystemRegenerated()
+        async void OnLSystemRegenerated()
         {
-            //UpdateLeaves();
+            await Task.Yield();
+            UpdateLeaves();
         }
         
 

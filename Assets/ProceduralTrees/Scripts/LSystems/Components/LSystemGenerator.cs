@@ -1,6 +1,7 @@
 using System;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace NathanTazi
 {
@@ -44,6 +45,7 @@ namespace NathanTazi
             BoundingBoxLs = Graph.GetBoundingBox(lsystem.baseRadius);
             
             gameObject.SendMessageUpwards("OnLSystemRegenerated",SendMessageOptions.DontRequireReceiver);
+            
         }
     
         #if UNITY_EDITOR

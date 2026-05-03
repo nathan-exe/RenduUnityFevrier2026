@@ -83,13 +83,10 @@ namespace NathanTazi
         void UpdateMaterialValues()
         {
             MaterialPropertyBlock materialBlock = new MaterialPropertyBlock();
-            print("bbMin : " +generator.BoundingBoxLs.min);
             materialBlock.SetVector(BoundingBoxMinLsShaderProperty, generator.BoundingBoxLs.min);
             materialBlock.SetVector(BoundingBoxMaxLsShaderProperty, generator.BoundingBoxLs.max);
             materialBlock.SetBuffer(SegmentsLsShaderProperty, buffer);
-            print("_treeTransform_ls_to_ws : "+ transform.localToWorldMatrix);
             materialBlock.SetMatrix(TreeTransformLsToWsShaderProperty, transform.localToWorldMatrix);
-            print("shader matrix : " + materialBlock.GetMatrix(TreeTransformLsToWsShaderProperty));
             materialBlock.SetInteger(SegmentCountShaderProperty, generator.Graph.segments.Count);  
             _meshRenderer.SetPropertyBlock(materialBlock);
         }
