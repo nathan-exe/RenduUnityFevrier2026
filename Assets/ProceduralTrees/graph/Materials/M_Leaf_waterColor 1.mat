@@ -162,7 +162,7 @@ Material:
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
     - _emissive: 0.2
-    - _smoothness: 0.1
+    - _smoothness: 0.15
     m_Colors:
     - _BaseColor: {r: 0.91613424, g: 1, b: 0.7877358, a: 1}
     - _BaseColorAddSubDiff: {r: 0, g: 0, b: 0, a: 0}
