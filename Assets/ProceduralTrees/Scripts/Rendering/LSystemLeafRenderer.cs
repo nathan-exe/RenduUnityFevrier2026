@@ -55,10 +55,19 @@ namespace NathanTazi
         
         public void UpdateLeaves()
         {
+            _leaves ??= new();
             _leaves.RemoveAll(t => !t);
-            print(_generator.Graph);
-            print(_generator.Graph.leaves);
-            print(_leaves);
+
+            //remove leaves that aren't in the list
+            if (_leaves.Count != _leafParent.childCount)
+            {
+                for (int i =  _leafParent.childCount - 1; i >= 0; i--)
+                {
+                    DestroyImmediate(_leafParent.GetChild(i).gameObject);
+                }
+            }
+            
+            
             //_generator.Graph.leaves
             if (_generator.Graph.leaves.Count != _leaves.Count)
             {
