@@ -272,12 +272,12 @@ namespace NathanTazi
                     if(symbol>'0' && symbol<='9')
                     {
                         int number = symbol-'0';
-                        turtle.currentRadius *= (1.0f - 1.0f/number);
+                        turtle.currentRadius  = Mathf.Lerp(turtle.currentRadius,turtle.currentRadius * (1.0f - 1.0f/number),symbolStrength);
                     }
                     else if(symbol>='a' && symbol<='f')
                     {
                         int number = symbol-'a'+ 10;
-                        turtle.currentRadius *= (1.0f - 1.0f/number);
+                        turtle.currentRadius  = Mathf.Lerp(turtle.currentRadius,turtle.currentRadius * (1.0f - 1.0f/number),symbolStrength);
                     }
                 }
                 
