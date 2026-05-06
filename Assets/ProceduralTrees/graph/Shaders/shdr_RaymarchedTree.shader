@@ -261,7 +261,7 @@ Shader "Vegetation/RaymarchedTree"
                 //on determine le LOD
                 float DepthBasedQualityLevel = 1.0-saturate(
                     distance(_WorldSpaceCameraPos.xyz,mul(unity_ObjectToWorld,float4(0,0,0,1)).xyz)
-                    * 1/200//_ProjectionParams.w
+                    * 1/400//_ProjectionParams.w
                     );//normalized distance to camera
                 DepthBasedQualityLevel *= DepthBasedQualityLevel*DepthBasedQualityLevel;
                 DepthBasedQualityLevel *= DepthBasedQualityLevel*DepthBasedQualityLevel;
