@@ -184,7 +184,7 @@ namespace NathanTazi
                         plantGraph.leaves.Add(new(
                             turtle.point,
                             turtle.transform,
-                            turtle.currentRadius*symbolStrength));
+                            Mathf.Pow(symbolStrength,.4f)));
                         
                         break; }
                 
