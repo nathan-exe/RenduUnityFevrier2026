@@ -160,7 +160,7 @@ Shader "Vegetation/RaymarchedTree"
                     
                     float smoothingRadius = _smoothing*_segments_ls[i].radiusA;
                     float smoothMinResult = smooth_min(hit.distance,sdfSample.sdf,smoothingRadius);
-                    //float smoothMinResult = min(hit.distance,sdfSample.sdf);
+                    //smoothMinResult = min(hit.distance,sdfSample.sdf);
                     hit.distance = smoothMinResult;
                     
                     if (sdfSample.sdf<minSdf && abs(minSdf - sdfSample.sdf)>.0001)
@@ -236,8 +236,9 @@ Shader "Vegetation/RaymarchedTree"
                 float3 color = _tint * tex2D(_albedo,uv);
                 //float3 color = _tint ;
                 color*= light;
+                //return float4(frac(uv),0,1);
+                //return float4(normalWs,1);
                 return float4(color,1);
-                //return float4(tex2D(_albedo,uv).xyz,1);
             }
             
             // fragment shader
@@ -278,7 +279,6 @@ Shader "Vegetation/RaymarchedTree"
                 // === raymarching ===
                 
                 //on avance le long d'un rayon jusqu'à ce que la distance avec la scène soit quasi nulle.
-                //https://iquilezles.org/articles/raymarchingdf/
                 bool hitAnySegment = false;
                 SceneHit sceneHit;
                 float3 samplePoint;
@@ -291,11 +291,10 @@ Shader "Vegetation/RaymarchedTree"
                     if (sceneHit.distance<=_threshold)
                     {
                         hitAnySegment = true;
-                        sceneHit = SceneSDF(samplePoint,branchClippingRadiusThreshold);
                         break;
                     }
                     
-                    rayLength += sceneHit.distance;//+_threshold;
+                    rayLength += sceneHit.distance;
                     clip((maxRayLength-rayLength));
                 }
                 clip(hitAnySegment-.5f);
@@ -308,11 +307,14 @@ Shader "Vegetation/RaymarchedTree"
                 //compute normal
                 
                 //float3 normal = normalize(mul(_treeTransform_ls_to_ws,(samplePoint-closestHit.unclampedH)));
-                float3 normal = normalize(mul(_treeTransform_ls_to_ws,samplePoint-lerp(closestHit.unclampedH,secondClosestHit.unclampedH,t)));
+                float3 normal = normalize(
+                    mul(_treeTransform_ls_to_ws,
+                        samplePoint-lerp(closestHit.clampedH,secondClosestHit.clampedH,t)));
 
                 //compute age
                 float age =  _segments_ls[sceneHit.segID].age
                     + closestHit.unclampedT*distance(_segments_ls[sceneHit.segID].a,_segments_ls[sceneHit.segID].b);
+
                 //compute UV
                 const float3 mainSegmentDir = (_segments_ls[sceneHit.segID].b-_segments_ls[sceneHit.segID].a);
 
@@ -322,7 +324,7 @@ Shader "Vegetation/RaymarchedTree"
                 const float angle = FastAngle(normal,referenceVector);
                 float2 uv = 0;
                 uv.x = angle/PI/2;// * _segments_ls[sceneHit.segID].radius/_segments_ls[0].radius;
-                uv.y = age;
+                uv.y = closestHit.clampedT;
                 
                 //lighting
                 output.color = ShadeTree(
@@ -331,6 +333,7 @@ Shader "Vegetation/RaymarchedTree"
                     uv*.5)*(age*.15+1);
 
                 //output.color = float4(t.xxx,1);
+                //output.color = float4(normal,1);
                 //output.color = float4(uv*.3,0,1);
                 //output.color = float4(samplePoint*2%1,1);
                 //output.color = float4(float3(sceneHit.distance,sceneHit.distance,sceneHit.distance)*10,1);
@@ -338,6 +341,7 @@ Shader "Vegetation/RaymarchedTree"
                 
                 //write to depth
                 float4 linearDepth = TransformWorldToHClip(mul(_treeTransform_ls_to_ws,float4( samplePoint,1)));
+                //linearDepth = TransformWorldToHClip(float4(IN.posWs));
                 float depth = linearDepth.z / linearDepth.w;
                 output.depth = depth;
                 
@@ -345,6 +349,56 @@ Shader "Vegetation/RaymarchedTree"
                 
             }
 
+            // // === pseudo code exemple ===
+            //
+            // int _branchCount;
+            // struct Branch
+            // {
+            // };
+            // float ComputeBranchSdf(float3, Branch){}
+            // StructuredBuffer<Branch> _branches;
+            //
+            // float ComputeSceneSDF(float3 samplePoint)
+            // {
+            //     //pour chaque branche de l'arbre
+            //     float minSdf = 1000;
+            //     for ( int i = 0; i<_branchCount; i++)
+            //     {
+            //         //on calcule la distance avec la branche,
+            //         //et on retient la distance la plus proche du point
+            //         minSdf = min(
+            //             minSdf,
+            //             ComputeBranchSdf(samplePoint, _branches[i]));
+            //     }
+            //     return minSdf;
+            // }
+            //
+            //
+            // void RaymarchScene(float3 cameraPosition, float3 rayDirection)
+            // {
+            //     const int MAX_ITERATIONS = 30;
+            //
+            //     float distanceToScene = 1000;
+            //     float totalTraveledDistance = 0;
+            //     for (int i = 0; i<MAX_ITERATIONS; i++)
+            //     {
+            //         //on calcule la distance avec la scène
+            //         float3 samplePoint = cameraPosition + rayDirection * totalTraveledDistance;
+            //         distanceToScene = ComputeSceneSDF(samplePoint);
+            //
+            //         //on avance de cette distance le long du rayon
+            //         totalTraveledDistance += distanceToScene;
+            //
+            //         //sdf < 0.01 : le rayon a touché une branche de l'arbre.
+            //         if (distanceToScene < 0.01)
+            //             break;
+            //     }
+            //
+            //     //on discard tous les pixels qui n'ont touché aucune branche de l'arbre
+            //     clip(0.01-distanceToScene); 
+            //     
+            //     //todo : shade pixel
+            // }
             
             ENDHLSL
         }
@@ -431,11 +485,6 @@ Pass
                 float4 posWs  : TEXCOORD1;
             };
             
-            struct fragOutput
-            {
-                half4 color : SV_Target;
-                float depth : SV_Depth;
-            };
 
             //vertex shader
             V2f vertex(VertexAttributes vertex)

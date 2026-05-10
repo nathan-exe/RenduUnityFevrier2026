@@ -47,7 +47,7 @@ public class ProfilingSetup : MonoBehaviour
         {
             _renderScale += 0.05f;
             _pipelineAsset.renderScale = _renderScale;
-            UpdateUI();
+            UpdateUI(); 
         }
         
         //tree branches
@@ -63,7 +63,7 @@ public class ProfilingSetup : MonoBehaviour
             _generator.iterations = _generatorIterations;
             _generator.RefreshGraph();
             UpdateUI();
-        }
+        } 
         
         if (Input.GetKeyUp(KeyCode.Space))
         {

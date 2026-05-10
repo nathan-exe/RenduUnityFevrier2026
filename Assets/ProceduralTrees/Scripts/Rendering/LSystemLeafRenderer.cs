@@ -65,7 +65,7 @@ namespace NathanTazi
 
         public void UpdateLeaves()
         {
-            if (!enabled) return;
+            if (!enabled || _generator.Graph == null) return;
             
             _leaves ??= new();
             _leaves.RemoveAll(t => !t);

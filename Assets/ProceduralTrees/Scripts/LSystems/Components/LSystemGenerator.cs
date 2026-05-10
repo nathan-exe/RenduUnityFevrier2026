@@ -11,7 +11,7 @@ namespace NathanTazi
     /// </summary>
     public class LSystemGenerator : MonoBehaviour 
     {
-        [SerializeField] public Lsystem3D lsystem;
+        public Lsystem3D lsystem;
         public PlantGraph Graph;
         public BoundingBox BoundingBoxLs;
     
@@ -126,8 +126,11 @@ public class LsystemGeneratorEditor : Editor
                 t.RefreshGraph();
             }
             GUILayout.Space(10);
-            GUILayout.Label("Segment count : " + t.Graph.segments.Count);
-            GUILayout.Label("Leaf count : " + t.Graph.leaves.Count);
+            if (t.Graph != null)
+            {
+                GUILayout.Label("Segment count : " + t.Graph.segments.Count);
+                GUILayout.Label("Leaf count : " + t.Graph.leaves.Count);
+            }
             GUILayout.Label("Lsystem symbol count : " + t.lsystem.Symbols.Length);
             GUILayout.Space(10);
             GUILayout.TextField("symbols : " +(t.lsystem.Symbols.Length>100?  t.lsystem.Symbols.Substring(0,100)+"...":t.lsystem.Symbols));

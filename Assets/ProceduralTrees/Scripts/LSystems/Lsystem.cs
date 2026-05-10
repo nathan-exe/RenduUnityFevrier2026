@@ -16,8 +16,7 @@ namespace NathanTazi
         public string Symbols { get; set; }
 
         [SerializeField] public Ruleset _rules;
-
-        [Serializable]
+        
         public class RandomValueSet
         {
             public float r0;
