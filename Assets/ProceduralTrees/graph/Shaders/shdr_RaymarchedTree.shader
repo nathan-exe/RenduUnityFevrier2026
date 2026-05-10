@@ -291,16 +291,8 @@ Shader "Vegetation/RaymarchedTree"
                 //float t = 1.0-saturate(distance(closestHit.clampedH, secondClosestHit.clampedH)*5);
                 
                 //compute normal
-                
-                //float3 normal = normalize(mul(_treeTransform_ls_to_ws,(samplePoint-closestHit.unclampedH)));
-                // float3 normal = normalize(
-                //     mul(_treeTransform_ls_to_ws,
-                //         samplePoint-lerp(closestHit.clampedH,secondClosestHit.clampedH,t)));
                 float3 normal = mul((float3x3)_treeTransform_ls_to_ws,sceneHit.normal);
-                //normal = mul((float3x3)_treeTransform_ls_to_ws,closestHit.normal);
-                //float3 normal = mul((float3x3)_treeTransform_ls_to_ws,closestHit.normal);
-                //normal = normalize(mul(_treeTransform_ls_to_ws,(samplePoint-closestHit.clampedH)));
-                
+
                 //compute age
                 float age =
                     _segments_ls[sceneHit.segID].age
