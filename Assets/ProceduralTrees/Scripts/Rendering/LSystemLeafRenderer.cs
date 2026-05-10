@@ -50,11 +50,23 @@ namespace NathanTazi
                 Mathf.InverseLerp(leafSizeRemap.x, leafSizeRemap.y, info.size))
                 * Vector3.one;
         }
-        
-        
-        
+
+        public void ClearLeaves()
+        {
+            _leaves ??= new();
+            _leaves.RemoveAll(t => !t);
+            
+            for (int i = _leafParent.childCount - 1; i >= 0; i--)
+            {
+                DestroyImmediate(_leafParent.GetChild(i).gameObject);
+            }
+        }
+
+
         public void UpdateLeaves()
         {
+            if (!enabled) return;
+            
             _leaves ??= new();
             _leaves.RemoveAll(t => !t);
 
@@ -106,6 +118,7 @@ namespace NathanTazi
         async void OnLSystemRegenerated()
         {
             await Task.Yield();
+            if (!enabled) return;
             UpdateLeaves();
         }
         
@@ -122,6 +135,7 @@ public class LSystemLeafRendererEditor : Editor
     public override void OnInspectorGUI()
     {
         if(GUILayout.Button("Update Leaves")) ((LSystemLeafRenderer)target).UpdateLeaves();
+        if(GUILayout.Button("Clear Leaves")) ((LSystemLeafRenderer)target).ClearLeaves();
         LSystemLeafRenderer t = (LSystemLeafRenderer)target;
         
         base.OnInspectorGUI();

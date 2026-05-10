@@ -18,7 +18,7 @@ namespace NathanTazi
         [Header("Generation")] 
         [SerializeField] protected string _axiom;//l'étape 0 de la simulation.
         [SerializeField][Range(0,1)] protected float totalGrowth;
-        [SerializeField][Range(0,6)] protected int iterations = 5;
+        [SerializeField][Range(0,6)] public int iterations = 3;
 
         [Header("Shape")]
         [SerializeField] private Vector2 radiusRangeOverLife = Vector2.one;
@@ -43,8 +43,19 @@ namespace NathanTazi
             
             Graph = lsystem.ComputeGraph();
             BoundingBoxLs = Graph.GetBoundingBox(lsystem.baseRadius);
-            
-            gameObject.SendMessageUpwards("OnLSystemRegenerated",SendMessageOptions.DontRequireReceiver);
+ 
+            try
+            {
+                gameObject.SendMessageUpwards("OnLSystemRegenerated", SendMessageOptions.DontRequireReceiver);
+            }
+            catch (AssertionException e)
+            {
+                Debug.LogWarning(e);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e,this);
+            }
             
         }
     
@@ -65,8 +76,11 @@ namespace NathanTazi
             }
         }
         #endif
-        
+          
+        #if UNITY_EDITOR
         protected virtual void OnValidate() => RefreshGraph();
+        #endif
+         
         protected virtual void Awake() => RefreshGraph();
     }
 
@@ -89,8 +103,8 @@ public class LsystemGeneratorEditor : Editor
                 "<color=white>\nUn Lsystem permettant de générer des arbres en 3D avec les symboles suivant :\n\n" +
                 "  f -> avancer\n" +
                 "  x -> avancer et placer une feuille\n" +
-                "  -+ -> tourner (pitch)\n" +
                 "  <> -> tourner (yaw)\n" +
+                "  -+ -> tourner (pitch)\n" +
                 "  .: -> tourner (roll)\n" +
                 "  u -> pour faire monter la branche vers le haut\n" +
                 "  [] -> empiler, dépiler l'état de la tortue\n" +
@@ -116,7 +130,7 @@ public class LsystemGeneratorEditor : Editor
             GUILayout.Label("Leaf count : " + t.Graph.leaves.Count);
             GUILayout.Label("Lsystem symbol count : " + t.lsystem.Symbols.Length);
             GUILayout.Space(10);
-            GUILayout.Label("symbols : " +(t.lsystem.Symbols.Length>100?  t.lsystem.Symbols.Substring(0,100)+"...":t.lsystem.Symbols));
+            GUILayout.TextField("symbols : " +(t.lsystem.Symbols.Length>100?  t.lsystem.Symbols.Substring(0,100)+"...":t.lsystem.Symbols));
             
         }
         

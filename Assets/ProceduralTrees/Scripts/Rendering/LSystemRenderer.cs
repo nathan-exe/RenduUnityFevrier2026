@@ -18,7 +18,7 @@ namespace NathanTazi
         [Header("Scene References")]
         [SerializeField] private GameObject cube;
         [SerializeField] private MeshRenderer _meshRenderer;
-    
+     
         ComputeBuffer buffer;
         
         void OnLSystemRegenerated()

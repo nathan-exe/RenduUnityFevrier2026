@@ -38,7 +38,7 @@ namespace NathanTazi
         public float totalGrowth;
         
         [Header("Algorithm")]
-        [SerializeField] bool enableBranchReduction;
+        public bool enableBranchReduction;
         
         //constructors
         public Lsystem3D(string axiom) : base(axiom)

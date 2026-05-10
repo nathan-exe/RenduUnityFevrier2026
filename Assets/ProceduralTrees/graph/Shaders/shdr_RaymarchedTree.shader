@@ -234,9 +234,10 @@ Shader "Vegetation/RaymarchedTree"
 
                 //color
                 float3 color = _tint * tex2D(_albedo,uv);
+                //float3 color = _tint ;
                 color*= light;
                 return float4(color,1);
-                return float4(tex2D(_albedo,uv).xyz,1);
+                //return float4(tex2D(_albedo,uv).xyz,1);
             }
             
             // fragment shader
@@ -315,7 +316,7 @@ Shader "Vegetation/RaymarchedTree"
                 //compute UV
                 const float3 mainSegmentDir = (_segments_ls[sceneHit.segID].b-_segments_ls[sceneHit.segID].a);
 
-                float3 referenceVector = float3(0,1,0);//normalize(_segments_ls[sceneHit.secondClosestSegID].b-_segments_ls[sceneHit.secondClosestSegID].a);
+                float3 referenceVector = normalize(float3(0,0,1));//normalize(_segments_ls[sceneHit.secondClosestSegID].b-_segments_ls[sceneHit.secondClosestSegID].a);
                 const float3 dir = normalize(mainSegmentDir);
                 referenceVector = normalize(projectOnPlane(referenceVector,dir));
                 const float angle = FastAngle(normal,referenceVector);
