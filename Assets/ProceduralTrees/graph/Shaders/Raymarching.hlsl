@@ -12,23 +12,21 @@ struct SdfResult
 {
     float sdf;//la distance signée avec le segment
     float clampedT;//distance AH
-    float unclampedT;//distance AH
     float3 clampedH;//le point projeté sur le centre du segment
-    float3 unclampedH;//le point projeté sur le centre du segment
+    float3 normal;
 };
 
 struct SceneHit
 {
-    float distance;
+    float3 normal;
     int segID;
-    int secondClosestSegID;
-    float smoothFactor;
+    float distance;
 };
  
 // === math ===
 
 //https://iquilezles.org/articles/smin/
-float smooth_min( float a, float b, float k )
+float2 smooth_min( float a, float b, float k )
 {
     // k *= 4.0;
     // float h = max( k-abs(a-b), 0.0 )/k;
@@ -36,9 +34,12 @@ float smooth_min( float a, float b, float k )
     // k *= 2.0;
     // float x = b-a;
     // return 0.5*( a+b-sqrt(x*x+k*k) );
-    k *= 2.0;
-    float x = b-a;
-    return 0.5*( a+b-sqrt(x*x+k*k) );
+    // k *= 2.0;
+    // float x = b-a;
+    // return 0.5*( a+b-sqrt(x*x+k*k) );
+    float f1 = exp( -k*a );
+    float f2 = exp( -k*b );
+    return float2(-log(f1+f2)/k,f2);
 }
 
 // === bounding box helper functions ===

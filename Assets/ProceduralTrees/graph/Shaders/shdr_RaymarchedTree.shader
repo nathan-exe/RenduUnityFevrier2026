@@ -126,19 +126,13 @@ Shader "Vegetation/RaymarchedTree"
                 // on retourne la distance entre H et M - le rayon de la capsule.
                 float3 AM = localPos - segment.a;
                 float3 AB = segment.b - segment.a;
-
-                // output.t =  saturate(dot(AB,AM)/ dot(AB,AB));
-                // output.h  = segment.a + AB * (output.t);
-                // output.sdf =  length(localPos - output.h) - lerp(segment.radiusA, segment.RadiusB, output.t);
-                // return output;
                 
-                output.unclampedT = dot(AB,AM)/ dot(AB,AB);
-                output.unclampedH  = segment.a + AB * output.unclampedT;
-                output.clampedT = saturate(output.unclampedT); // t : la longueur normalisée de la projection de M sur le segment AB 
-
-                output.clampedH = segment.a + AB * (output.clampedT);
-                output.sdf =  length(localPos - output.clampedH) - lerp(segment.radiusA, segment.RadiusB, output.clampedT);
-                
+                output.clampedT = saturate(dot(AB,AM)/ dot(AB,AB)); // t : la longueur normalisée de la projection de M sur le segment AB 
+                output.clampedH = segment.a + AB * output.clampedT;
+                output.normal = (output.clampedH-localPos);
+                float normalLength = length(output.normal);
+                output.normal/=normalLength;
+                output.sdf = normalLength - lerp(segment.radiusA, segment.RadiusB, output.clampedT);
                 return output;
             }
             
@@ -151,36 +145,29 @@ Shader "Vegetation/RaymarchedTree"
                 SceneHit hit;
                 hit.distance = 100;
                 hit.segID = 0;
-
+                hit.normal = 0;
+                
                 float minSdf = 100;
-                float minSdf2 = 101;
+                float wSum = 0;
                 for (int i = 0; i<_segmentCount && hit.distance>_threshold && _segments_ls[i].radiusA>minBranchRadius;i++)
                 {
                     SdfResult sdfSample = SegmentSDF(localPos,_segments_ls[i]);
-                    
                     float smoothingRadius = _smoothing*_segments_ls[i].radiusA;
-                    float smoothMinResult = smooth_min(hit.distance,sdfSample.sdf,smoothingRadius);
-                    //smoothMinResult = min(hit.distance,sdfSample.sdf);
-                    hit.distance = smoothMinResult;
-                    
-                    if (sdfSample.sdf<minSdf && abs(minSdf - sdfSample.sdf)>.0001)
+                    float2 smoothMinResult = smooth_min(hit.distance,sdfSample.sdf,_smoothing/(1+_segments_ls[i].radiusA*10)); 
+                    //smoothMinResult = float2(min(sdfSample.sdf,hit.distance),1);
+
+                    wSum += smoothMinResult.y;
+                    hit.normal += sdfSample.normal * smoothMinResult.y;
+                        hit.distance = lerp(min(hit.distance,sdfSample.sdf), smoothMinResult.x,.5);
+
+                    if (sdfSample.sdf < minSdf)
                     {
-                        if (minSdf<minSdf2)
-                        {
-                            minSdf2 = minSdf;
-                            hit.secondClosestSegID = hit.segID;
-                        }
-                        
-                        hit.segID = i;
                         minSdf = sdfSample.sdf;
-                        
-                    }else if (sdfSample.sdf < minSdf2)
-                    {
-                        hit.secondClosestSegID = i;
-                        minSdf2 = sdfSample.sdf;
+                        hit.segID = i;
                     }
                 }
-                hit.smoothFactor = 0;
+                hit.normal = normalize(hit.normal/wSum);
+                
                 return hit;
             }
             
@@ -274,7 +261,6 @@ Shader "Vegetation/RaymarchedTree"
                 const float3 localRayDirection = mul((float3x3)Inverse(_treeTransform_ls_to_ws),-GetWorldSpaceNormalizeViewDir(IN.posWs.xyz).xyz);// normalize(IN.worldPos.xyz- _WorldSpaceCameraPos.xyz );
                 const float maxRayLength = ComputeMaxRayLengthInBoundingBox(localRayOrigin,localRayDirection,_boundingBoxMin_ls ,_boundingBoxMax_ls);
                 float rayLength = 0;
-
                 
                 // === raymarching ===
                 
@@ -301,19 +287,23 @@ Shader "Vegetation/RaymarchedTree"
                 
                 // === shading du pixel ===
                 SdfResult closestHit =  SegmentSDF(samplePoint,_segments_ls[sceneHit.segID]);
-                SdfResult secondClosestHit =  SegmentSDF(samplePoint,_segments_ls[sceneHit.secondClosestSegID]);
-                float t = 1.0-saturate(distance(closestHit.clampedH, secondClosestHit.clampedH)*5);
+                //SdfResult secondClosestHit =  SegmentSDF(samplePoint,_segments_ls[sceneHit.secondClosestSegID]);
+                //float t = 1.0-saturate(distance(closestHit.clampedH, secondClosestHit.clampedH)*5);
                 
                 //compute normal
                 
                 //float3 normal = normalize(mul(_treeTransform_ls_to_ws,(samplePoint-closestHit.unclampedH)));
-                float3 normal = normalize(
-                    mul(_treeTransform_ls_to_ws,
-                        samplePoint-lerp(closestHit.clampedH,secondClosestHit.clampedH,t)));
-
+                // float3 normal = normalize(
+                //     mul(_treeTransform_ls_to_ws,
+                //         samplePoint-lerp(closestHit.clampedH,secondClosestHit.clampedH,t)));
+                float3 normal = mul((float3x3)_treeTransform_ls_to_ws,sceneHit.normal);
+                //float3 normal = mul((float3x3)_treeTransform_ls_to_ws,closestHit.normal);
+                //normal = normalize(mul(_treeTransform_ls_to_ws,(samplePoint-closestHit.clampedH)));
+                
                 //compute age
-                float age =  _segments_ls[sceneHit.segID].age
-                    + closestHit.unclampedT*distance(_segments_ls[sceneHit.segID].a,_segments_ls[sceneHit.segID].b);
+                float age =
+                    _segments_ls[sceneHit.segID].age
+                    + closestHit.clampedT*distance(_segments_ls[sceneHit.segID].a,_segments_ls[sceneHit.segID].b);
 
                 //compute UV
                 const float3 mainSegmentDir = (_segments_ls[sceneHit.segID].b-_segments_ls[sceneHit.segID].a);
@@ -437,7 +427,7 @@ Pass
             int _segmentCount;
             matrix _treeTransform_ls_to_ws;
 
-//retourne la distance signée avec un segment épaissis; une capsule
+            //retourne la distance signée avec un segment épaissis; une capsule
             //https://iquilezles.org/articles/distfunctions/
             SdfResult SegmentSDF(float3 localPos,Segment segment)
             {
@@ -448,10 +438,12 @@ Pass
                 float3 AM = localPos - segment.a;
                 float3 AB = segment.b - segment.a;
                 
-                output.clampedT =  saturate(dot(AB,AM)/ dot(AB,AB)); // t : la longueur normalisée de la projection de M sur le segment AB 
-                output.clampedH  = segment.a + AB * (output.clampedT);
-
-                output.sdf =  length(localPos - output.clampedH) - lerp(segment.radiusA, segment.RadiusB, output.clampedT);
+                output.clampedT = saturate(dot(AB,AM)/ dot(AB,AB)); // t : la longueur normalisée de la projection de M sur le segment AB 
+                output.clampedH = segment.a + AB * output.clampedT;
+                output.normal = (output.clampedH-localPos);
+                float normalLength = length(output.normal);
+                output.normal/=normalLength;
+                output.sdf = normalLength - lerp(segment.radiusA, segment.RadiusB, output.clampedT);
                 return output;
             }
             
