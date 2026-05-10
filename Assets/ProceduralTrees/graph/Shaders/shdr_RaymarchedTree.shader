@@ -129,7 +129,7 @@ Shader "Vegetation/RaymarchedTree"
                 
                 output.clampedT = saturate(dot(AB,AM)/ dot(AB,AB)); // t : la longueur normalisée de la projection de M sur le segment AB 
                 output.clampedH = segment.a + AB * output.clampedT;
-                output.normal = (output.clampedH-localPos);
+                output.normal = (localPos-output.clampedH);
                 float normalLength = length(output.normal);
                 output.normal/=normalLength;
                 output.sdf = normalLength - lerp(segment.radiusA, segment.RadiusB, output.clampedT);
@@ -153,7 +153,7 @@ Shader "Vegetation/RaymarchedTree"
                 {
                     SdfResult sdfSample = SegmentSDF(localPos,_segments_ls[i]);
                     float smoothingRadius = _smoothing*_segments_ls[i].radiusA;
-                    float2 smoothMinResult = smooth_min(hit.distance,sdfSample.sdf,_smoothing/(1+_segments_ls[i].radiusA*10)); 
+                    float2 smoothMinResult = smooth_min(hit.distance,sdfSample.sdf,_smoothing/(1+_segments_ls[i].radiusA*20)); 
                     //smoothMinResult = float2(min(sdfSample.sdf,hit.distance),1);
 
                     wSum += smoothMinResult.y;
@@ -297,6 +297,7 @@ Shader "Vegetation/RaymarchedTree"
                 //     mul(_treeTransform_ls_to_ws,
                 //         samplePoint-lerp(closestHit.clampedH,secondClosestHit.clampedH,t)));
                 float3 normal = mul((float3x3)_treeTransform_ls_to_ws,sceneHit.normal);
+                //normal = mul((float3x3)_treeTransform_ls_to_ws,closestHit.normal);
                 //float3 normal = mul((float3x3)_treeTransform_ls_to_ws,closestHit.normal);
                 //normal = normalize(mul(_treeTransform_ls_to_ws,(samplePoint-closestHit.clampedH)));
                 
