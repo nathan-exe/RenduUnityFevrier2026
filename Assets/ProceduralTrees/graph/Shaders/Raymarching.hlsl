@@ -34,7 +34,7 @@ float2 smooth_min( float a, float b, float k )
     // k *= 2.0;
     // float x = b-a;
     // return 0.5*( a+b-sqrt(x*x+k*k) );
-    // k *= 2.0;
+    // k *= 2.0; 
     // float x = b-a;
     // return 0.5*( a+b-sqrt(x*x+k*k) );
     float f1 = exp( -k*a );
@@ -90,3 +90,67 @@ pos.x <= boxMax.x && pos.x >= boxMin.x
 && pos.y <= boxMax.y && pos.y >= boxMin.y 
 && pos.z <= boxMax.z && pos.z >= boxMin.z;
 }
+
+bool RayOverlapsSegment(float3 localRayOrigin,float3 localRayDirection,Segment segment, float extrudeRadius)
+{
+    float3  ba = segment.b - segment.a;
+    float3  oa = localRayOrigin - segment.a;
+
+    float baba = dot(ba,ba);
+    float bard = dot(ba,localRayDirection);
+    float baoa = dot(ba,oa);
+    float rdoa = dot(localRayDirection,oa);
+    float oaoa = dot(oa,oa);
+
+    float a = baba      - bard*bard;
+    float b = baba*rdoa - baoa*bard;
+    float maxRadius = max(max(segment.radiusA,segment.RadiusB),extrudeRadius)+.2;
+    float c = baba*oaoa - baoa*baoa - maxRadius*maxRadius*baba;
+    float h = b*b - a*c;
+    if( h>=0.0 )
+    {
+        float t = (-b-sqrt(h))/a;
+        float y = baoa + t*bard;
+        // body
+        if( y>0.0 && y<baba ) return true;
+        // caps
+        float3 oc = (y<=0.0) ? oa : localRayOrigin - segment.b;
+        b = dot(localRayDirection,oc);
+        c = dot(oc,oc) - maxRadius*maxRadius;
+        h = b*b - c;
+        if( h>0.0 ) return true;
+    }
+    return false;
+}
+
+// bool RayOverlapsSegment(float3 localRayOrigin,float3 localRayDirection,Segment segment)
+// {
+//     float3  ba = segment.b - segment.a;
+//     float3  oa = localRayOrigin - segment.a;
+//
+//     float baba = dot(ba,ba);
+//     float bard = dot(ba,localRayDirection);
+//     float baoa = dot(ba,oa);
+//     float rdoa = dot(localRayDirection,oa);
+//     float oaoa = dot(oa,oa);
+//
+//     float a = baba      - bard*bard;
+//     float b = baba*rdoa - baoa*bard;
+//     float maxRadius = max(segment.radiusA,segment.RadiusB);
+//     float c = baba*oaoa - baoa*baoa - maxRadius*maxRadius*baba;
+//     float h = b*b - a*c;
+//     if( h>=0.0 )
+//     {
+//         float t = (-b-sqrt(h))/a;
+//         float y = baoa + t*bard;
+//         // body
+//         if( y>0.0 && y<baba ) return t;
+//         // caps
+//         float3 oc = (y<=0.0) ? oa : localRayOrigin - segment.b;
+//         b = dot(localRayDirection,oc);
+//         c = dot(oc,oc) - maxRadius*maxRadius;
+//         h = b*b - c;
+//         if( h>0.0 ) return -b - sqrt(h);
+//     }
+//     return -1.0;
+//}

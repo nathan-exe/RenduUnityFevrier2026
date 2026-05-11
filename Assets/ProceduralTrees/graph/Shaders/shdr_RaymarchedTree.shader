@@ -170,7 +170,42 @@ Shader "Vegetation/RaymarchedTree"
                 
                 return hit;
             }
-            
+
+            static const int MAX_CANDIDATES = 20;
+            SceneHit SceneSDF(float3 localPos, int candidatesIDs[MAX_CANDIDATES], int candidatesCount)
+            {
+                //todo : octree ou binary space partitionning pour éviter d'itérer à travers tous les segments.
+                //todo : interpolation d'attributs entre les 2 segments les plus proches
+                
+                SceneHit hit;
+                hit.distance = 100;
+                hit.segID = 0;
+                hit.normal = 0;
+
+                float minSdf = 100;
+                float wSum = 0;
+                for (int j = 0; j<candidatesCount && hit.distance>_threshold;j++)
+                {
+                    int i = candidatesIDs[j];
+                    SdfResult sdfSample = SegmentSDF(localPos,_segments_ls[i]);
+                    float smoothingRadius = _smoothing*_segments_ls[i].radiusA;
+                    float2 smoothMinResult = smooth_min(hit.distance,sdfSample.sdf,_smoothing/(1+_segments_ls[i].radiusA*20)); 
+                    //smoothMinResult = float2(min(sdfSample.sdf,hit.distance),1);
+
+                    wSum += smoothMinResult.y;
+                    hit.normal += sdfSample.normal * smoothMinResult.y;
+                        hit.distance = lerp(min(hit.distance,sdfSample.sdf), smoothMinResult.x,.5);
+
+                    if (sdfSample.sdf < minSdf)
+                    {
+                        minSdf = sdfSample.sdf;
+                        hit.segID = i;
+                    }
+                }
+                hit.normal = normalize(hit.normal/wSum);
+                
+                return hit;
+            }
             
             //== shader functions ==
 
@@ -263,6 +298,24 @@ Shader "Vegetation/RaymarchedTree"
                 float rayLength = 0;
                 
                 // === raymarching ===
+
+                //on trouve les candidats au raymarching avec du raycasting //todo : avec l'octree
+                int possibleSegmentIDs[MAX_CANDIDATES];
+                int stackPointer = 0;
+                for (int i=0; i<_segmentCount && stackPointer<MAX_CANDIDATES;i++)
+                {
+                    if (RayOverlapsSegment(localRayOrigin, localRayDirection,_segments_ls[i],_threshold))
+                    {
+                        possibleSegmentIDs[stackPointer++] = i; 
+                    }
+                }
+                clip(stackPointer-.5);
+
+                // float a = (float)stackPointer/MAX_CANDIDATES;
+                // output.depth = 1;
+                // output.color = float4(stackPointer==MAX_CANDIDATES-1,0,a,1);
+                // return output;
+                
                 
                 //on avance le long d'un rayon jusqu'à ce que la distance avec la scène soit quasi nulle.
                 bool hitAnySegment = false;
@@ -271,7 +324,8 @@ Shader "Vegetation/RaymarchedTree"
                 for (int i =0; i<_maxIterations;i++)
                 {
                     samplePoint = localRayOrigin+localRayDirection*rayLength;
-                    sceneHit = SceneSDF(samplePoint,branchClippingRadiusThreshold);
+                    sceneHit = SceneSDF(samplePoint,possibleSegmentIDs,stackPointer);
+                    //sceneHit = SceneSDF(samplePoint,branchClippingRadiusThreshold);
 
                     //distance quasi nulle <=> surface touchée
                     if (sceneHit.distance<=_threshold)

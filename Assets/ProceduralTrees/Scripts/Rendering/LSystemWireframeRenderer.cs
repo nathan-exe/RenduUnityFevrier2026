@@ -5,6 +5,8 @@ namespace NathanTazi
     public class LSystemWireframeRenderer : MonoBehaviour
     {
         [SerializeField]
+        private float thickness = .2f;
+        [SerializeField]
         private LSystemGenerator generator;
         void Draw()
         {
@@ -16,7 +18,7 @@ namespace NathanTazi
 
                 Vector3 ABws = transform.TransformPoint(segment.b) - transform.TransformPoint(segment.a);
                 Gizmos.matrix = Matrix4x4.LookAt(transform.TransformPoint(segment.a), transform.TransformPoint(segment.b), Vector3.up);
-                Gizmos.DrawCube(Vector3.forward*.5f*ABws.magnitude,new Vector3(1,1,ABws.magnitude));
+                Gizmos.DrawCube(Vector3.forward*.5f*ABws.magnitude,new Vector3(thickness,thickness,ABws.magnitude));
                 
                 Gizmos.matrix = Matrix4x4.identity;
                 Gizmos.DrawLine(transform.TransformPoint(segment.a) ,transform.TransformPoint(segment.b));
