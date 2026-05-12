@@ -104,7 +104,7 @@ bool RayOverlapsSegment(float3 localRayOrigin,float3 localRayDirection,Segment s
 
     float a = baba      - bard*bard;
     float b = baba*rdoa - baoa*bard;
-    float maxRadius = max(max(segment.radiusA,segment.RadiusB),extrudeRadius)+.2;
+    float maxRadius = max(max(segment.radiusA,segment.RadiusB)*4,extrudeRadius)+.2;
     float c = baba*oaoa - baoa*baoa - maxRadius*maxRadius*baba;
     float h = b*b - a*c;
     if( h>=0.0 )

@@ -508,6 +508,24 @@ Pass
                 
                 return distance;
             }
+
+            static const int MAX_CANDIDATES = 10;
+            float SceneSDF(float3 localPos, int candidatesIDs[MAX_CANDIDATES], int candidatesCount)
+            {
+                //todo : octree ou binary space partitionning pour éviter d'itérer à travers tous les segments.
+                //todo : interpolation d'attributs entre les 2 segments les plus proches
+                
+                float distance = 100;
+                
+                for (int j = 0; j<candidatesCount && distance>_threshold;j++)
+                {
+                    int i = candidatesIDs[j];
+                    SdfResult sdfSample = SegmentSDF(localPos,_segments_ls[i]);
+                    distance = min(distance,sdfSample.sdf);
+                }
+                
+                return distance;
+            }
             
             //== shader functions ==
 
@@ -556,7 +574,20 @@ Pass
                 //float3 rayOrigin = IN.posLs.xyz-rayDirection*(length(bbSize_ls));
                 //onst float maxRayLength = ComputeMaxRayLengthInBoundingBox(rayOrigin,rayDirection,_boundingBoxMin_ls ,_boundingBoxMax_ls);
 
+                //filtrage des branches
+                int possibleSegmentIDs[MAX_CANDIDATES];
+                int stackPointer = 0;
+                for (int i=0; i<_segmentCount && stackPointer<MAX_CANDIDATES;i++)
+                {
+                    if (RayOverlapsSegment(localRayOrigin, localRayDirection,_segments_ls[i],_threshold))
+                    {
+                        possibleSegmentIDs[stackPointer++] = i; 
+                    } 
+                }
+                clip(stackPointer-.5);
 
+
+                
                 float rayLength = 0;
                 
                 // === raymarching ===
@@ -569,8 +600,9 @@ Pass
                 for (int i =0; i<_maxIterations;i++)
                 {
                     samplePoint = localRayOrigin+localRayDirection*rayLength;
-                    sdf = SceneSDF(samplePoint,0);
-
+                    //sdf = SceneSDF(samplePoint);
+                    sdf = SceneSDF(samplePoint,possibleSegmentIDs,MAX_CANDIDATES);
+                
                     //distance quasi nulle <=> surface touchée
                     if (sdf<=_threshold)
                     {
@@ -582,6 +614,8 @@ Pass
                     clip((maxRayLength-rayLength));
                 }
                 clip(hitAnySegment-.5f);
+
+                
                 
                 //write to depth
                 float4 linearDepth = TransformWorldToHClip(mul(_treeTransform_ls_to_ws,float4( samplePoint,1)));
