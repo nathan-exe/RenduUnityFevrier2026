@@ -23,7 +23,6 @@ namespace NathanTazi
         [Header("Shape")]
         [SerializeField] private Vector2 radiusRangeOverLife = Vector2.one;
         
-        
         /// <summary>
         /// recalcule toute la structure de l'arbre
         /// </summary>
