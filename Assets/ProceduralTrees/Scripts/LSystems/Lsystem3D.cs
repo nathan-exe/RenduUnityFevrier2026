@@ -190,49 +190,48 @@ namespace NathanTazi
                 
                     // '-' : turn down
                     case '-' :
-                        turtle.transform = turtle.transform * Matrix4x4.Rotate( Quaternion.Euler(
-                            new Vector3(-(PitchAngleRange.x + random.r0.RemapRange(-PitchAngleRange.y,PitchAngleRange.y)),0,0)
-                            * symbolStrength));
+                        turtle.transform = turtle.transform * Matrix4x4.Rotate( 
+                            Quaternion.Slerp(Quaternion.identity,
+                            Quaternion.Euler(-(PitchAngleRange.x + random.r0.RemapRange(-PitchAngleRange.y,PitchAngleRange.y)),0,0),
+                            symbolStrength));
                         break;
                 
                     // '+' : turn up
                     case '+' :
                         turtle.transform = turtle.transform * Matrix4x4.Rotate(
-                            Quaternion.Euler(
-                                new Vector3(PitchAngleRange.x + random.r0.RemapRange(-PitchAngleRange.y,PitchAngleRange.y),0,0)
-                                * symbolStrength));
+                            Quaternion.Slerp(Quaternion.identity,
+                            Quaternion.Euler(PitchAngleRange.x + random.r0.RemapRange(-PitchAngleRange.y,PitchAngleRange.y),0,0)
+                            ,symbolStrength));
                         break;
                 
                     //'<' : turn left
                     case '<' :
-                        turtle.transform = turtle.transform * Matrix4x4.Rotate( 
-                            Quaternion.Euler(
-                                new Vector3(0, -(YawAngleRange.x + random.r0.RemapRange(-YawAngleRange.y,YawAngleRange.y)),0)
-                                * symbolStrength));
+                        turtle.transform = turtle.transform * Matrix4x4.Rotate(
+                            Quaternion.Slerp(Quaternion.identity,
+                            Quaternion.Euler(0, -(YawAngleRange.x + random.r0.RemapRange(-YawAngleRange.y,YawAngleRange.y)),0),
+                            symbolStrength));
                         break;
                 
                     //'>' : turn right
                     case '>' :
                         turtle.transform = turtle.transform * Matrix4x4.Rotate(
-                            Quaternion.Euler(
-                                new Vector3(0, YawAngleRange.x + random.r0.RemapRange(-YawAngleRange.y,YawAngleRange.y),0)
-                                * symbolStrength));
+                            Quaternion.Slerp(Quaternion.identity, 
+                            Quaternion.Euler( 0, YawAngleRange.x + random.r0.RemapRange(-YawAngleRange.y,YawAngleRange.y),0),
+                            symbolStrength));
                         break;
                 
                     // '.' : turn down
                     case '.' :
                         turtle.transform = turtle.transform * Matrix4x4.Rotate(
-                           Quaternion.Euler(
-                               new Vector3(0, 0, -(RollAngleRange.x + random.r0.RemapRange(-RollAngleRange.y,RollAngleRange.y)))
-                               * symbolStrength));
+                            Quaternion.Slerp(Quaternion.identity,
+                            Quaternion.Euler(0, 0, -(RollAngleRange.x + random.r0.RemapRange(-RollAngleRange.y,RollAngleRange.y))),symbolStrength));
                         break;
                 
                     // ':' : turn up
                     case ':' :
-                        turtle.transform = turtle.transform * Matrix4x4.Rotate( 
-                           Quaternion.Euler(
-                               new Vector3(0, 0, RollAngleRange.x + random.r0.RemapRange(-RollAngleRange.y,RollAngleRange.y))
-                               * symbolStrength));
+                        turtle.transform = turtle.transform * Matrix4x4.Rotate(
+                            Quaternion.Slerp(Quaternion.identity,
+                            Quaternion.Euler(0, 0, RollAngleRange.x + random.r0.RemapRange(-RollAngleRange.y,RollAngleRange.y)),symbolStrength));
                         break;
                     
                     case 'u' :
