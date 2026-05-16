@@ -57,8 +57,13 @@ namespace NathanTazi
             }
             
         }
-    
-        #if UNITY_EDITOR
+
+        private void Update()
+        {
+            RefreshGraph();
+        }
+
+#if UNITY_EDITOR
         [InitializeOnLoadMethod]
         static void Initialize()
         {

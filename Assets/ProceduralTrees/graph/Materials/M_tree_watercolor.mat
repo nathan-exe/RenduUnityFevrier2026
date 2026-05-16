@@ -43,6 +43,6 @@ Material:
     - _smoothing: {r: 1, g: 1, b: 1, a: 1}
     - _testSegA: {r: 30.3, g: 5.69, b: 9.11, a: 0}
     - _testSegB: {r: 30.8, g: 1.2, b: 9.11, a: 0}
-    - _tint: {r: 7.414942, g: 4.613232, b: 3.8823516, a: 1}
+    - _tint: {r: 4.291146, g: 2.9090602, b: 2.6516042, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

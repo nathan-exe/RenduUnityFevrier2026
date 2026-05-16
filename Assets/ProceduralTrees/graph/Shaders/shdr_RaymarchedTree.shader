@@ -266,8 +266,17 @@ Shader "Vegetation/RaymarchedTree"
             // fragment shader
             fragOutput frag(V2f IN) 
             {
+                float2 screenUVs = GetNormalizedScreenSpaceUV(IN.positionCS);
+                clip(
+                    (
+                        (
+                            screenUVs.x<=1 && screenUVs.x >=0)
+                            && (screenUVs.y<=1 && screenUVs.y >=0)
+                        )-0.5
+                    );
+                
                 fragOutput output;
-
+                
                 // === pixel culling ===
                 
                 //on clip les backfaces ou les front faces selon si la cam
@@ -299,6 +308,7 @@ Shader "Vegetation/RaymarchedTree"
                 
                 // === raymarching ===
 
+                
                 //on trouve les candidats au raymarching avec du raycasting //todo : avec l'octree
                 int possibleSegmentIDs[MAX_CANDIDATES];
                 int stackPointer = 0;
@@ -316,6 +326,7 @@ Shader "Vegetation/RaymarchedTree"
                 // output.color = float4(stackPointer==MAX_CANDIDATES-1,0,a,1);
                 // return output;
                 
+                int ____sdfCount = 0;
                 
                 //on avance le long d'un rayon jusqu'à ce que la distance avec la scène soit quasi nulle.
                 bool hitAnySegment = false;
@@ -323,6 +334,9 @@ Shader "Vegetation/RaymarchedTree"
                 float3 samplePoint;
                 for (int i =0; i<_maxIterations;i++)
                 {
+                    //____sdfCount+=stackPointer+1;
+                    ____sdfCount+=_segmentCount;
+                    
                     samplePoint = localRayOrigin+localRayDirection*rayLength;
                     sceneHit = SceneSDF(samplePoint,possibleSegmentIDs,stackPointer);
                     //sceneHit = SceneSDF(samplePoint,branchClippingRadiusThreshold);
@@ -367,8 +381,12 @@ Shader "Vegetation/RaymarchedTree"
                 output.color = ShadeTree(
                     normal,
                     mul((float3x3)_treeTransform_ls_to_ws,localRayDirection),
-                    uv*.5)*(age*.15+1);
+                    uv*.5)*(age*.2+1);
 
+                // int MAX_SDF_COUNT = _segmentCount * _maxIterations;
+                // float v = (float)____sdfCount/(float)MAX_SDF_COUNT;
+                // output.color = float4(v,0,0,1);
+                
                 //output.color = float4(t.xxx,1);
                 //output.color = float4(normal,1);
                 //output.color = float4(uv*.3,0,1);
