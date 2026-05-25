@@ -28,6 +28,8 @@ namespace NathanTazi
         [SerializeField] [Range(0,1)]
         private float _leafFlattening;
 
+        public Vector3 rotationOffset;
+
         void InstantiateLeaf()
         {
             GameObject go = new GameObject("Leaf");
@@ -42,8 +44,8 @@ namespace NathanTazi
             leaf.transform.position = transform.TransformPoint(info.localPosition);
             leaf.transform.rotation = 
                 Quaternion.Slerp(
-                    Quaternion.LookRotation(info.branchTransform*Vector3.forward,info.branchTransform*Vector3.up),
-                    Quaternion.LookRotation(-Vector3.up,info.branchTransform*Vector3.up),
+                    Quaternion.LookRotation(info.branchTransform* Vector3.forward, Vector3.up/*info.branchTransform*Vector3.up*/),
+                    Quaternion.LookRotation(Vector3.up,info.branchTransform*Vector3.up),
                     _leafFlattening);
             leaf.transform.localScale = 
                 Mathf.Lerp(leafSizeRemap.z, leafSizeRemap.w,

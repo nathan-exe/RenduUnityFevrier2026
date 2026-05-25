@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: M_vegetation
+  m_Name: m_groundGrass
   m_Shader: {fileID: -6465566751694194690, guid: a74dd026351ec2e4db3d5f65b1b7e5a1, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -137,7 +137,7 @@ Material:
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
-    - _WindDisplacementStrength: 0.15
+    - _WindDisplacementStrength: 0.011
     - _WindTiling: 0.05
     - _WorkflowMode: 1
     - _XRMotionVectorsPass: 1
@@ -150,8 +150,8 @@ Material:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _BaseColorAddSubDiff: {r: 0, g: 0, b: 0, a: 0}
     - _CameraFadeParams: {r: 0, g: Infinity, b: 0, a: 0}
-    - _Color: {r: 3.4415908, g: 3.3065746, b: 0.36037588, a: 1}
-    - _Color_2: {r: 2.433572, g: 1.4427689, b: 0.5478722, a: 1}
+    - _Color: {r: 6.943396, g: 5.2575994, b: 0.6877892, a: 1}
+    - _Color_2: {r: 1.4789492, g: 0.94945747, b: 0.32788023, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SoftParticleFadeParams: {r: 0, g: 0, b: 0, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
