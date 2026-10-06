@@ -12,8 +12,7 @@ Shader "Vegetation/RaymarchedTree"
         _smoothing ("smoothing", Float) = 1
         
         //material
-        _albedo ("albedo", 2D) = "white" {} 
-        [HDR]_tint ("tint", Color) = (1,1,1, 1)
+        _lightGradient ("lightGradient", 2D) = "white" {} 
     }
 
     // The SubShader block containing the Shader code.
@@ -55,8 +54,7 @@ Shader "Vegetation/RaymarchedTree"
             matrix _treeTransform_ls_to_ws;
 
             //material
-            float3 _tint;
-            sampler2D  _albedo;
+            sampler2D  _lightGradient;
             
             //== shader functions ==
 
@@ -70,8 +68,9 @@ Shader "Vegetation/RaymarchedTree"
             struct V2f
             {
                 float4 positionCS  : SV_POSITION;
-                float3 posLs  : TEXCOORD0;
                 float4 posWs  : TEXCOORD1;
+                float4 screenPosition : TEXCOORD3;
+                float3 posLs  : TEXCOORD0;
                 float3 normalWs  : TEXCOORD2;
             };
             
@@ -90,7 +89,10 @@ Shader "Vegetation/RaymarchedTree"
                 OUT.posWs = mul(unity_ObjectToWorld,vertex.positionOs);
                 OUT.posLs =  mul(Inverse(_treeTransform_ls_to_ws), OUT.posWs);
                 OUT.normalWs = TransformObjectToWorldNormal(vertex.normalOs);
-                    
+
+                OUT.screenPosition = ComputeScreenPos(OUT.positionCS);
+
+                
                 // Returning the output. 
                 return OUT;
             }
@@ -145,6 +147,8 @@ Shader "Vegetation/RaymarchedTree"
             // fragment shader
             fragOutput frag(V2f IN) 
             {
+                fragOutput output;
+                
                 float2 screenUVs = GetNormalizedScreenSpaceUV(IN.positionCS);
                 
                 // === pixel culling ===
@@ -161,22 +165,11 @@ Shader "Vegetation/RaymarchedTree"
                 //on fait une premiere etape de raymarching en 2D, screenspace pour clip tous les pixels de la bb qui ne toucheront aucune branche. -> -5fps
                 //clip(-SceneSDF_2D(IN.posWs)+.01);
                 
-                /// === preparation raymarching ===
-                
-                //on determine le LOD
-                float DepthBasedQualityLevel = 1.0-saturate(
-                    distance(_WorldSpaceCameraPos.xyz,mul(unity_ObjectToWorld,float4(0,0,0,1)).xyz)
-                    * 1/400//_ProjectionParams.w
-                    );//normalized distance to camera
-                DepthBasedQualityLevel *= DepthBasedQualityLevel*DepthBasedQualityLevel;
-                DepthBasedQualityLevel *= DepthBasedQualityLevel*DepthBasedQualityLevel;
-                float branchClippingRadiusThreshold = min(.1-DepthBasedQualityLevel,0.1*_segments_ls[0].radiusA);
+                /// === preparation raytracing ===
                 
                 //definition du rayon sur lequel on va se déplacer
                 float3 localRayOrigin = cameraIsInsideBoundingBox ? localCameraPos : IN.posLs;
-                const float3 localRayDirection = mul((float3x3)Inverse(_treeTransform_ls_to_ws),-GetWorldSpaceNormalizeViewDir(IN.posWs.xyz).xyz);// normalize(IN.worldPos.xyz- _WorldSpaceCameraPos.xyz );
-                const float maxRayLength = ComputeMaxRayLengthInBoundingBox(localRayOrigin,localRayDirection,_boundingBoxMin_ls ,_boundingBoxMax_ls);
-                float rayLength = 0;
+                float3 localRayDirection = mul((float3x3)Inverse(_treeTransform_ls_to_ws),-GetWorldSpaceNormalizeViewDir(IN.posWs.xyz).xyz);// normalize(IN.worldPos.xyz- _WorldSpaceCameraPos.xyz );
                 
                 // === raytracing ===
                 
@@ -195,9 +188,9 @@ Shader "Vegetation/RaymarchedTree"
             
                 //pixel shading
                 float lambert = dot(closesResult.yzw,_MainLightPosition.xyz);
-                
-                fragOutput output;
-                output.color = float4(lambert,lambert,lambert,1);
+                float3 col = tex2D(_lightGradient,float2(round(lambert*3)/3,0));
+                //todo : hue shift in data
+                output.color = float4(col,1);
                 output.depth = 1;
                 return output;
                 

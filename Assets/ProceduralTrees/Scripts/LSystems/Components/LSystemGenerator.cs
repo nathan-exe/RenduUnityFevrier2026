@@ -16,8 +16,8 @@ namespace NathanTazi
         public BoundingBox BoundingBoxLs;
     
         [Header("Generation")] 
-        [SerializeField] protected string _axiom;//l'étape 0 de la simulation.
-        [SerializeField][Range(0,1)] protected float totalGrowth;
+        [SerializeField] public string _axiom;//l'étape 0 de la simulation.
+        [SerializeField][Range(0,1)] public float totalGrowth;
         [SerializeField][Range(0,6)] public int iterations = 3;
 
         [Header("Shape")]
