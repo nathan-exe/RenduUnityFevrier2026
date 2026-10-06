@@ -14,8 +14,6 @@ Shader "Vegetation/RaymarchedTree"
         //material
         _albedo ("albedo", 2D) = "white" {} 
         [HDR]_tint ("tint", Color) = (1,1,1, 1)
-        
-        
     }
 
     // The SubShader block containing the Shader code.
@@ -60,153 +58,6 @@ Shader "Vegetation/RaymarchedTree"
             float3 _tint;
             sampler2D  _albedo;
             
-            // === sdf 2D ===
-            
-            /*float CapsuleSdf2D(float2 p,float2 a, float2 b, float radius)
-            {
-                //https://iquilezles.org/articles/distfunctions2d/ (segment un peu pimp avec les 2 radius à la fin)
-                float2 pa = p-a, ba = b-a;
-                float h = clamp( dot(pa,ba)/dot(ba,ba), 0.0, 1.0 );
-                return length( pa - ba*h ) - radius;//- lerp(radiusB,radiusA,h);
-            }
-
-            float2 TreeSpacePointToScreenPoint(float3 positionTs, matrix treeToClip)
-            {
-                float aspectRatio = _ScreenSize.y*_ScreenSize.z; //  height/width
-                float3 positionCs = mul(treeToClip, float4(positionTs,1));
-                return positionCs.xy/positionCs.z * float2(1,aspectRatio);
-            }
-
-            float TreeSpaceRadiusToScreenSpaceRadius(float3 PosTs,float3 cameraPosWs, float radiusTs)
-            {
-                float radiusWs = radiusTs; //todo : scaling
-                float3 PosWs = mul(_treeTransform_ls_to_ws,float4(PosTs,1)); //world space
-
-                float distanceToCamera = distance (PosWs, cameraPosWs);
-
-                return length(radiusWs/distanceToCamera);
-            }
-            
-            //retourne la distance signée avec l'ensemble des branches de l'arbre, en 2D
-            float SceneSDF_2D(float3 positionWs)
-            {
-                float aspectRatio = _ScreenSize.y*_ScreenSize.z; //  height/width
-                matrix worldToScreen = mul( unity_CameraProjection,  unity_WorldToCamera);
-                matrix treeToScreen = mul( worldToScreen, _treeTransform_ls_to_ws);
-                float3 posCs = mul(worldToScreen, float4(positionWs,1));
-                float2 screenPos = posCs.xy/posCs.z * float2(1,aspectRatio);
-                float3 cameraPosWs = mul(unity_CameraToWorld,float4(0,0,0,1));
-                
-                float distance = 100000000;
-                for (int i = 0; i<_segmentCount;i++)
-                {
-                    float2 a2D = TreeSpacePointToScreenPoint(_segments_ls[i].a,treeToScreen);
-                    float2 b2D = TreeSpacePointToScreenPoint(_segments_ls[i].b,treeToScreen);
-                    float r2D = TreeSpaceRadiusToScreenSpaceRadius(_segments_ls[i].a,cameraPosWs,_segments_ls[i].radius);
-                    //float smoothing2D = TreeSpaceRadiusToScreenSpaceRadius(_smoothing);
-                    float sdf = CapsuleSdf2D(screenPos,a2D,b2D,r2D);
-                    distance = min(sdf,distance);
-                    //distance = smooth_min(distance,sdf,smoothing2D*_segments_ls[i].radius);
-                }
-                
-                return distance;
-            }*/
-
-            
-
-            // === sdf 3D ===
-            
-            //retourne la distance signée avec un segment épaissis; une capsule
-            //https://iquilezles.org/articles/distfunctions/
-            SdfResult SegmentSDF(float3 localPos,Segment segment)
-            {
-                SdfResult output;
-                
-                //H = le point M (local pos) projeté sur le segment AB.
-                // on retourne la distance entre H et M - le rayon de la capsule.
-                float3 AM = localPos - segment.a;
-                float3 AB = segment.b - segment.a;
-                
-                output.clampedT = saturate(dot(AB,AM)/ dot(AB,AB)); // t : la longueur normalisée de la projection de M sur le segment AB 
-                output.clampedH = segment.a + AB * output.clampedT;
-                output.normal = (localPos-output.clampedH);
-                float normalLength = length(output.normal);
-                output.normal/=normalLength;
-                output.sdf = normalLength - lerp(segment.radiusA, segment.RadiusB, output.clampedT);
-                return output;
-            }
-            
-            //retourne la distance signée avec l'ensemble des branches de l'arbre
-            SceneHit SceneSDF(float3 localPos, float minBranchRadius = 0)
-            {
-                //todo : octree ou binary space partitionning pour éviter d'itérer à travers tous les segments.
-                //todo : interpolation d'attributs entre les 2 segments les plus proches
-                
-                SceneHit hit;
-                hit.distance = 100;
-                hit.segID = 0;
-                hit.normal = 0;
-                
-                float minSdf = 100;
-                float wSum = 0;
-                for (int i = 0; i<_segmentCount && hit.distance>_threshold && _segments_ls[i].radiusA>minBranchRadius;i++)
-                {
-                    SdfResult sdfSample = SegmentSDF(localPos,_segments_ls[i]);
-                    float smoothingRadius = _smoothing*_segments_ls[i].radiusA;
-                    float2 smoothMinResult = smooth_min(hit.distance,sdfSample.sdf,_smoothing/(1+_segments_ls[i].radiusA*20)); 
-                    //smoothMinResult = float2(min(sdfSample.sdf,hit.distance),1);
-
-                    wSum += smoothMinResult.y;
-                    hit.normal += sdfSample.normal * smoothMinResult.y;
-                        hit.distance = lerp(min(hit.distance,sdfSample.sdf), smoothMinResult.x,.5);
-
-                    if (sdfSample.sdf < minSdf)
-                    {
-                        minSdf = sdfSample.sdf;
-                        hit.segID = i;
-                    }
-                }
-                hit.normal = normalize(hit.normal/wSum);
-                
-                return hit;
-            }
-
-            static const int MAX_CANDIDATES = 20;
-            SceneHit SceneSDF(float3 localPos, int candidatesIDs[MAX_CANDIDATES], int candidatesCount)
-            {
-                //todo : octree ou binary space partitionning pour éviter d'itérer à travers tous les segments.
-                //todo : interpolation d'attributs entre les 2 segments les plus proches
-                
-                SceneHit hit;
-                hit.distance = 100;
-                hit.segID = 0;
-                hit.normal = 0;
-
-                float minSdf = 100;
-                float wSum = 0;
-                for (int j = 0; j<candidatesCount && hit.distance>_threshold;j++)
-                {
-                    int i = candidatesIDs[j];
-                    SdfResult sdfSample = SegmentSDF(localPos,_segments_ls[i]);
-                    float smoothingRadius = _smoothing*_segments_ls[i].radiusA;
-                    float2 smoothMinResult = smooth_min(hit.distance,sdfSample.sdf,_smoothing/(1+_segments_ls[i].radiusA*20)); 
-                    //smoothMinResult = float2(min(sdfSample.sdf,hit.distance),1);
-
-                    wSum += smoothMinResult.y;
-                    hit.normal += sdfSample.normal * smoothMinResult.y;
-                        hit.distance = lerp(min(hit.distance,sdfSample.sdf), smoothMinResult.x,.5);
-
-                    if (sdfSample.sdf < minSdf)
-                    {
-                        minSdf = sdfSample.sdf;
-                        hit.segID = i;
-                    }
-                }
-                hit.normal = normalize(hit.normal/wSum);
-                
-                return hit;
-            }
-            
             //== shader functions ==
 
             struct VertexAttributes
@@ -245,39 +96,60 @@ Shader "Vegetation/RaymarchedTree"
             }
 
 
-            float4 ShadeTree(float3 normalWs, float3 rayDirectionWs, float2 uv)
+            // cone defined by extremes "pa" and "pb", and radius "ra" and "rb"
+            float4 raycastAgainstRoundedCone( float3 rayOrigin, float3 rayDirection, float3 A, float3 B, float rA, float rB )
             {
-                //return float4(normalWs,1);
-                //light
-                float lambert = saturate(dot(normalWs,_MainLightPosition));
-                float specular = pow(saturate(dot(reflect(_MainLightPosition, normalWs), rayDirectionWs)), 2);
-                float fresnel = pow(saturate(dot(reflect(rayDirectionWs, normalWs), rayDirectionWs)), 1.4);
-                float3 light = lerp(unity_AmbientSky *1.5 ,_MainLightColor,lambert) + specular * (_MainLightColor)*.1 + fresnel * unity_AmbientSky;
+                float3  ba = B - A;
+                float3  oa = rayOrigin - A;
+                float3  ob = rayOrigin - B;
+                float rr = rA - rB;
+                float m0 = dot(ba,ba);
+                float m1 = dot(ba,oa);
+                float m2 = dot(ba,rayDirection);
+                float m3 = dot(rayDirection,oa);
+                float m5 = dot(oa,oa);
+                float m6 = dot(ob,rayDirection);
+                float m7 = dot(ob,ob);
+                
+                // body
+                float d2 = m0-rr*rr;
+                float k2 = d2    - m2*m2;
+                float k1 = d2*m3 - m1*m2 + m2*rr*rA;
+                float k0 = d2*m5 - m1*m1 + m1*rr*rA*2.0 - m0*rA*rA;
+                float h = k1*k1 - k0*k2;
+                if( h<0.0) return float4(-1.0,-1,-1,-1);
+                float t = (-sqrt(h)-k1)/k2;
+              //if( t<0.0 ) return float4(-1.0);
+                float y = m1 - rA*rr + t*m2;
+                if( y>0.0 && y<d2 ) return float4(t, normalize(d2*(oa+t*rayDirection)-ba*y));
 
-                //color
-                float3 color = _tint * tex2D(_albedo,uv);
-                //float3 color = _tint ;
-                color*= light;
-                //return float4(frac(uv),0,1);
-                //return float4(normalWs,1);
-                return float4(color,1);
+                // caps
+                float h1 = m3*m3 - m5 + rA*rA;
+                float h2 = m6*m6 - m7 + rB*rB;
+                if( max(h1,h2)<0.0 ) return float4(-1.0,-1,-1,-1);
+                float4 r = float4(1e20,1e20,1e20,1e20);
+                if( h1>0.0 )
+                {        
+    	            t = -m3 - sqrt( h1 );
+                    r = float4( t, (oa+t*rayDirection)/rA );
+                }
+                if( h2>0.0 )
+                {
+    	            t = -m6 - sqrt( h2 );
+                    if( t<r.x )
+                    r = float4( t, (ob+t*rayDirection)/rB );
+                }
+                return r;
             }
             
             // fragment shader
             fragOutput frag(V2f IN) 
             {
                 float2 screenUVs = GetNormalizedScreenSpaceUV(IN.positionCS);
-                clip(
-                    (
-                        (
-                            screenUVs.x<=1 && screenUVs.x >=0)
-                            && (screenUVs.y<=1 && screenUVs.y >=0)
-                        )-0.5
-                    );
-                
-                fragOutput output;
                 
                 // === pixel culling ===
+
+                clip((screenUVs.x<=1 && screenUVs.x >=0 && (screenUVs.y<=1 && screenUVs.y >=0))-0.5);
                 
                 //on clip les backfaces ou les front faces selon si la cam
                 //est dans la bounding box pour eviter de dessiner l'arbre deux fois à chaque fois. -> +5fps
@@ -306,99 +178,60 @@ Shader "Vegetation/RaymarchedTree"
                 const float maxRayLength = ComputeMaxRayLengthInBoundingBox(localRayOrigin,localRayDirection,_boundingBoxMin_ls ,_boundingBoxMax_ls);
                 float rayLength = 0;
                 
-                // === raymarching ===
-
+                // === raytracing ===
                 
                 //on trouve les candidats au raymarching avec du raycasting //todo : avec l'octree
-                int possibleSegmentIDs[MAX_CANDIDATES];
-                int stackPointer = 0;
-                for (int i=0; i<_segmentCount && stackPointer<MAX_CANDIDATES;i++)
+                float4 closesResult = float4(-1,0,0,0);
+                for (int i=0; i<_segmentCount; i++)
                 {
-                    if (RayOverlapsSegment(localRayOrigin, localRayDirection,_segments_ls[i],_threshold))
+                    float4 raycastResult = raycastAgainstRoundedCone(localRayOrigin, localRayDirection,_segments_ls[i].a,_segments_ls[i].b,_segments_ls[i].radiusA,_segments_ls[i].RadiusB);
+                    if (raycastResult.x > 0 && (raycastResult.x < closesResult.x || closesResult.x<0))
                     {
-                        possibleSegmentIDs[stackPointer++] = i; 
+                        closesResult = raycastResult; 
                     }
                 }
-                clip(stackPointer-.5);
 
-                // float a = (float)stackPointer/MAX_CANDIDATES;
-                // output.depth = 1;
-                // output.color = float4(stackPointer==MAX_CANDIDATES-1,0,a,1);
-                // return output;
+                clip(closesResult.x);
+            
+                //pixel shading
+                float lambert = dot(closesResult.yzw,_MainLightPosition.xyz);
                 
-                int ____sdfCount = 0;
-                
-                //on avance le long d'un rayon jusqu'à ce que la distance avec la scène soit quasi nulle.
-                bool hitAnySegment = false;
-                SceneHit sceneHit;
-                float3 samplePoint;
-                for (int i =0; i<_maxIterations;i++)
-                {
-                    //____sdfCount+=stackPointer+1;
-                    ____sdfCount+=_segmentCount;
-                    
-                    samplePoint = localRayOrigin+localRayDirection*rayLength;
-                    sceneHit = SceneSDF(samplePoint,possibleSegmentIDs,stackPointer);
-                    //sceneHit = SceneSDF(samplePoint,branchClippingRadiusThreshold);
-
-                    //distance quasi nulle <=> surface touchée
-                    if (sceneHit.distance<=_threshold)
-                    {
-                        hitAnySegment = true;
-                        break;
-                    }
-                    
-                    rayLength += sceneHit.distance;
-                    clip((maxRayLength-rayLength));
-                }
-                clip(hitAnySegment-.5f);
+                fragOutput output;
+                output.color = float4(lambert,lambert,lambert,1);
+                output.depth = 1;
+                return output;
                 
                 // === shading du pixel ===
-                SdfResult closestHit =  SegmentSDF(samplePoint,_segments_ls[sceneHit.segID]);
-                //SdfResult secondClosestHit =  SegmentSDF(samplePoint,_segments_ls[sceneHit.secondClosestSegID]);
-                //float t = 1.0-saturate(distance(closestHit.clampedH, secondClosestHit.clampedH)*5);
                 
                 //compute normal
-                float3 normal = mul((float3x3)_treeTransform_ls_to_ws,sceneHit.normal);
+                //float3 normal = mul((float3x3)_treeTransform_ls_to_ws,sceneHit.normal);
 
                 //compute age
-                float age =
-                    _segments_ls[sceneHit.segID].age
-                    + closestHit.clampedT*distance(_segments_ls[sceneHit.segID].a,_segments_ls[sceneHit.segID].b);
+                // float age =
+                //     _segments_ls[sceneHit.segID].age
+                //     + closestHit.clampedT*distance(_segments_ls[sceneHit.segID].a,_segments_ls[sceneHit.segID].b);
 
                 //compute UV
-                const float3 mainSegmentDir = (_segments_ls[sceneHit.segID].b-_segments_ls[sceneHit.segID].a);
-
-                float3 referenceVector = normalize(float3(0,0,1));//normalize(_segments_ls[sceneHit.secondClosestSegID].b-_segments_ls[sceneHit.secondClosestSegID].a);
-                const float3 dir = normalize(mainSegmentDir);
-                referenceVector = normalize(projectOnPlane(referenceVector,dir));
-                const float angle = FastAngle(normal,referenceVector);
-                float2 uv = 0;
-                uv.x = angle/PI/2;// * _segments_ls[sceneHit.segID].radius/_segments_ls[0].radius;
-                uv.y = closestHit.clampedT;
+                // const float3 mainSegmentDir = (_segments_ls[sceneHit.segID].b-_segments_ls[sceneHit.segID].a);
+                //
+                // float3 referenceVector = normalize(float3(0,0,1));//normalize(_segments_ls[sceneHit.secondClosestSegID].b-_segments_ls[sceneHit.secondClosestSegID].a);
+                // const float3 dir = normalize(mainSegmentDir);
+                // referenceVector = normalize(projectOnPlane(referenceVector,dir));
+                // const float angle = FastAngle(normal,referenceVector);
+                // float2 uv = 0;
+                // uv.x = angle/PI/2;// * _segments_ls[sceneHit.segID].radius/_segments_ls[0].radius;
+                // uv.y = closestHit.clampedT;
                 
                 //lighting
-                output.color = ShadeTree(
-                    normal,
-                    mul((float3x3)_treeTransform_ls_to_ws,localRayDirection),
-                    uv*.5)*(age*.2+1);
-
-                // int MAX_SDF_COUNT = _segmentCount * _maxIterations;
-                // float v = (float)____sdfCount/(float)MAX_SDF_COUNT;
-                // output.color = float4(v,0,0,1);
-                
-                //output.color = float4(t.xxx,1);
-                //output.color = float4(normal,1);
-                //output.color = float4(uv*.3,0,1);
-                //output.color = float4(samplePoint*2%1,1);
-                //output.color = float4(float3(sceneHit.distance,sceneHit.distance,sceneHit.distance)*10,1);
-                //output.color = float4(SecondClosestHit.clampedH,1);
+                // output.color = ShadeTree(
+                //     normal,
+                //     mul((float3x3)_treeTransform_ls_to_ws,localRayDirection),
+                //     uv*.5)*(age*.2+1);
                 
                 //write to depth
-                float4 linearDepth = TransformWorldToHClip(mul(_treeTransform_ls_to_ws,float4( samplePoint,1)));
-                //linearDepth = TransformWorldToHClip(float4(IN.posWs));
-                float depth = linearDepth.z / linearDepth.w;
-                output.depth = depth;
+                //float4 linearDepth = TransformWorldToHClip(mul(_treeTransform_ls_to_ws,float4( samplePoint,1)));
+                //float depth = linearDepth.z / linearDepth.w;
+                //output.depth = depth;
                 
                 return output;
                 
@@ -491,59 +324,6 @@ Pass
             StructuredBuffer<Segment> _segments_ls; //todo : binary space partitionning 
             int _segmentCount;
             matrix _treeTransform_ls_to_ws;
-
-            //retourne la distance signée avec un segment épaissis; une capsule
-            //https://iquilezles.org/articles/distfunctions/
-            SdfResult SegmentSDF(float3 localPos,Segment segment)
-            {
-                SdfResult output;
-                
-                //H = le point M (local pos) projeté sur le segment AB.
-                // on retourne la distance entre H et M - le rayon de la capsule.
-                float3 AM = localPos - segment.a;
-                float3 AB = segment.b - segment.a;
-                
-                output.clampedT = saturate(dot(AB,AM)/ dot(AB,AB)); // t : la longueur normalisée de la projection de M sur le segment AB 
-                output.clampedH = segment.a + AB * output.clampedT;
-                output.normal = (output.clampedH-localPos);
-                float normalLength = length(output.normal);
-                output.normal/=normalLength;
-                output.sdf = normalLength - lerp(segment.radiusA, segment.RadiusB, output.clampedT);
-                return output;
-            }
-            
-            //retourne la distance signée avec l'ensemble des branches de l'arbre
-            float SceneSDF(float3 localPos, float minBranchRadius = 0)
-            {
-                //todo : octree ou binary space partitionning pour éviter d'itérer à travers tous les segments.
-                //todo : interpolation d'attributs entre les 2 segments les plus proches
-                float distance = 1000;
-                for (int i = 0; i<_segmentCount && distance>_threshold && _segments_ls[i].radiusA>minBranchRadius;i++)
-                {
-                    SdfResult result = SegmentSDF(localPos,_segments_ls[i]);
-                    distance = min(distance,result.sdf);
-                }
-                
-                return distance;
-            }
-
-            static const int MAX_CANDIDATES = 10;
-            float SceneSDF(float3 localPos, int candidatesIDs[MAX_CANDIDATES], int candidatesCount)
-            {
-                //todo : octree ou binary space partitionning pour éviter d'itérer à travers tous les segments.
-                //todo : interpolation d'attributs entre les 2 segments les plus proches
-                
-                float distance = 100;
-                
-                for (int j = 0; j<candidatesCount && distance>_threshold;j++)
-                {
-                    int i = candidatesIDs[j];
-                    SdfResult sdfSample = SegmentSDF(localPos,_segments_ls[i]);
-                    distance = min(distance,sdfSample.sdf);
-                }
-                
-                return distance;
-            }
             
             //== shader functions ==
 
@@ -577,69 +357,69 @@ Pass
             // fragment shader
             float frag(V2f IN) : SV_Depth 
             {
-                // === pixel culling ===
-                
-                //on clip les backfaces
-                
-                /// === preparation raymarching ===
-                
-                //definition du rayon sur lequel on va se déplacer
-                const float3 localRayDirection = normalize(mul((float3x3)Inverse(_treeTransform_ls_to_ws),_MainLightPosition));// normalize(IN.worldPos.xyz- _WorldSpaceCameraPos.xyz );
-                float3 localRayOrigin = IN.posLs-localRayDirection*100;
-                const float maxRayLength = 1000;//ComputeMaxRayLengthInBoundingBox(localRayOrigin,localRayDirection,_boundingBoxMin_ls ,_boundingBoxMax_ls);
- 
-                //const float3 rayDirection = normalize(_MainLightPosition.xyz);
-                //float3 rayOrigin = IN.posLs.xyz-rayDirection*(length(bbSize_ls));
-                //onst float maxRayLength = ComputeMaxRayLengthInBoundingBox(rayOrigin,rayDirection,_boundingBoxMin_ls ,_boundingBoxMax_ls);
-
-                //filtrage des branches
-                int possibleSegmentIDs[MAX_CANDIDATES];
-                int stackPointer = 0;
-                for (int i=0; i<_segmentCount && stackPointer<MAX_CANDIDATES;i++)
-                {
-                    if (RayOverlapsSegment(localRayOrigin, localRayDirection,_segments_ls[i],_threshold))
-                    {
-                        possibleSegmentIDs[stackPointer++] = i; 
-                    } 
-                }
-                clip(stackPointer-.5);
-
-
-                
-                float rayLength = 0;
-                
-                // === raymarching ===
-                
-                //on avance le long d'un rayon jusqu'à ce que la distance avec la scène soit quasi nulle.
-                //https://iquilezles.org/articles/raymarchingdf/
-                bool hitAnySegment = false;
-                float3 samplePoint;
-                float sdf;
-                for (int i =0; i<_maxIterations;i++)
-                {
-                    samplePoint = localRayOrigin+localRayDirection*rayLength;
-                    //sdf = SceneSDF(samplePoint);
-                    sdf = SceneSDF(samplePoint,possibleSegmentIDs,MAX_CANDIDATES);
-                
-                    //distance quasi nulle <=> surface touchée
-                    if (sdf<=_threshold)
-                    {
-                        hitAnySegment = true;
-                        break;
-                    }
-                    
-                    rayLength += sdf+_threshold;
-                    clip((maxRayLength-rayLength));
-                }
-                clip(hitAnySegment-.5f);
-
-                
-                
+                // // === pixel culling ===
+                //
+                // //on clip les backfaces
+                //
+                // /// === preparation raymarching ===
+                //
+                // //definition du rayon sur lequel on va se déplacer
+                // const float3 localRayDirection = normalize(mul((float3x3)Inverse(_treeTransform_ls_to_ws),_MainLightPosition));// normalize(IN.worldPos.xyz- _WorldSpaceCameraPos.xyz );
+                // float3 localRayOrigin = IN.posLs-localRayDirection*100;
+                // const float maxRayLength = 1000;//ComputeMaxRayLengthInBoundingBox(localRayOrigin,localRayDirection,_boundingBoxMin_ls ,_boundingBoxMax_ls);
+                //
+                // //const float3 rayDirection = normalize(_MainLightPosition.xyz);
+                // //float3 rayOrigin = IN.posLs.xyz-rayDirection*(length(bbSize_ls));
+                // //onst float maxRayLength = ComputeMaxRayLengthInBoundingBox(rayOrigin,rayDirection,_boundingBoxMin_ls ,_boundingBoxMax_ls);
+                //
+                // //filtrage des branches
+                // int possibleSegmentIDs[MAX_CANDIDATES];
+                // int stackPointer = 0;
+                // for (int i=0; i<_segmentCount && stackPointer<MAX_CANDIDATES;i++)
+                // {
+                //     if (RayOverlapsSegment(localRayOrigin, localRayDirection,_segments_ls[i],_threshold))
+                //     {
+                //         possibleSegmentIDs[stackPointer++] = i; 
+                //     } 
+                // }
+                // clip(stackPointer-.5);
+                //
+                //
+                //
+                // float rayLength = 0;
+                //
+                // // === raymarching ===
+                //
+                // //on avance le long d'un rayon jusqu'à ce que la distance avec la scène soit quasi nulle.
+                // //https://iquilezles.org/articles/raymarchingdf/
+                // bool hitAnySegment = false;
+                // float3 samplePoint;
+                // float sdf;
+                // for (int i =0; i<_maxIterations;i++)
+                // {
+                //     samplePoint = localRayOrigin+localRayDirection*rayLength;
+                //     //sdf = SceneSDF(samplePoint);
+                //     sdf = SceneSDF(samplePoint,possibleSegmentIDs,MAX_CANDIDATES);
+                //
+                //     //distance quasi nulle <=> surface touchée
+                //     if (sdf<=_threshold)
+                //     {
+                //         hitAnySegment = true;
+                //         break;
+                //     }
+                //     
+                //     rayLength += sdf+_threshold;
+                //     clip((maxRayLength-rayLength));
+                // }
+                // clip(hitAnySegment-.5f);
+                //
+                //
+                //
                 //write to depth
-                float4 linearDepth = TransformWorldToHClip(mul(_treeTransform_ls_to_ws,float4( samplePoint,1)));
-                float depth = linearDepth.z / linearDepth.w;
-                return depth;
-                
+                //float4 linearDepth = TransformWorldToHClip(mul(_treeTransform_ls_to_ws,float4( samplePoint,1)));
+                //float depth = linearDepth.z / linearDepth.w;
+                //return depth;
+                return 0;
             }
             
             ENDHLSL

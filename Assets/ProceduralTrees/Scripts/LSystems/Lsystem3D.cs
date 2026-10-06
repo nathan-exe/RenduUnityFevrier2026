@@ -34,6 +34,7 @@ namespace NathanTazi
         [SerializeField] public Vector2 RollAngleRange;
         [SerializeField] [Range(0,1)] public float verticalAngleBiasStrength;
         [SerializeField] public float baseRadius;
+        [SerializeField] [Range(0,1)] public float _radiusDivisionStrength01;
         [SerializeField][Range(0,1)][FormerlySerializedAs("growth")] public float growthThisStep;
         public float totalGrowth;
         
@@ -271,12 +272,12 @@ namespace NathanTazi
                     if(symbol>'0' && symbol<='9')
                     {
                         int number = symbol-'0';
-                        turtle.currentRadius  = Mathf.Lerp(turtle.currentRadius,turtle.currentRadius * (1.0f - 1.0f/number),symbolStrength);
+                        turtle.currentRadius  = Mathf.Lerp(turtle.currentRadius,turtle.currentRadius * (1.0f - 1.0f/number),symbolStrength*_radiusDivisionStrength01);
                     }
                     else if(symbol>='a' && symbol<='f')
                     {
                         int number = symbol-'a'+ 10;
-                        turtle.currentRadius  = Mathf.Lerp(turtle.currentRadius,turtle.currentRadius * (1.0f - 1.0f/number),symbolStrength);
+                        turtle.currentRadius  = Mathf.Lerp(turtle.currentRadius,turtle.currentRadius * (1.0f - 1.0f/number),symbolStrength*_radiusDivisionStrength01);
                     }
                 }
                 
