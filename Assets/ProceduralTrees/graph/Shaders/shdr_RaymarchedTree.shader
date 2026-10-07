@@ -12,7 +12,9 @@ Shader "Vegetation/RaymarchedTree"
         _smoothing ("smoothing", Float) = 1
         
         //material
-        _lightGradient ("lightGradient", 2D) = "white" {} 
+        _lightGradient ("lightGradient", 2D) = "white" {}
+        _HueOverAge ("hueOverAge", 2D) = "white" {}
+        _maxAge ("maxAge", Float) = 1
     }
 
     // The SubShader block containing the Shader code.
@@ -55,6 +57,8 @@ Shader "Vegetation/RaymarchedTree"
 
             //material
             sampler2D  _lightGradient;
+            sampler2D  _hueOverAge;
+            float _maxAge;
             
             //== shader functions ==
 
@@ -96,8 +100,7 @@ Shader "Vegetation/RaymarchedTree"
                 // Returning the output. 
                 return OUT;
             }
-
-
+            
             // cone defined by extremes "pa" and "pb", and radius "ra" and "rb"
             float4 raycastAgainstRoundedCone( float3 rayOrigin, float3 rayDirection, float3 A, float3 B, float rA, float rB )
             {
@@ -175,12 +178,14 @@ Shader "Vegetation/RaymarchedTree"
                 
                 //on trouve les candidats au raymarching avec du raycasting //todo : avec l'octree
                 float4 closesResult = float4(-1,0,0,0);
+                int hitSegmentIndex;
                 for (int i=0; i<_segmentCount; i++)
                 {
                     float4 raycastResult = raycastAgainstRoundedCone(localRayOrigin, localRayDirection,_segments_ls[i].a,_segments_ls[i].b,_segments_ls[i].radiusA,_segments_ls[i].RadiusB);
                     if (raycastResult.x > 0 && (raycastResult.x < closesResult.x || closesResult.x<0))
                     {
-                        closesResult = raycastResult; 
+                        hitSegmentIndex = i;
+                        closesResult = raycastResult;
                     }
                 }
 
@@ -190,7 +195,9 @@ Shader "Vegetation/RaymarchedTree"
                 float lambert = dot(closesResult.yzw,_MainLightPosition.xyz);
                 float3 col = tex2D(_lightGradient,float2(round(lambert*3)/3,0));
                 //todo : hue shift in data
-                output.color = float4(col,1);
+                float normalizedAge =  _segments_ls[hitSegmentIndex].age / _maxAge;
+                //output.color = float4(col * normalizedAge,1);
+                output.color = float4(normalizedAge,normalizedAge,normalizedAge,1);
                 output.depth = 1;
                 return output;
                 

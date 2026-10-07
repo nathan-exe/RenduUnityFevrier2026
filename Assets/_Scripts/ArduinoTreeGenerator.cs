@@ -35,7 +35,6 @@ public class ArduinoTreeGenerator : MonoBehaviour
         //water level
         _generator.totalGrowth = waterLevel01;
         
-        
         _generator.RefreshGraph();
     }
     

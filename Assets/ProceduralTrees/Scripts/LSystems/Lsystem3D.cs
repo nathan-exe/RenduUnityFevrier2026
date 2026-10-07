@@ -78,6 +78,7 @@ namespace NathanTazi
                 set
                 {
                     traveledDistance += Vector3.Distance(_point, value);
+                    maxTraveledDistance = Mathf.Max(maxTraveledDistance,traveledDistance);
                     _point = value;
                 }
             }
@@ -95,6 +96,8 @@ namespace NathanTazi
             
             public float currentRadius;
             public float oldRadius;
+
+            public static float maxTraveledDistance;
         }
 
         protected override bool SymbolUsesRandomValues(char s)
@@ -122,6 +125,8 @@ namespace NathanTazi
             int i = 0;
             int lastSymbolID = Symbols.Length;
             RandomValueSet random = new();
+
+            Turtle.maxTraveledDistance = 0;
             
             foreach (char symbol in Symbols)
             {
@@ -284,6 +289,7 @@ namespace NathanTazi
                 i++;
             }
         
+            plantGraph.maxTraveledDistance = Turtle.maxTraveledDistance;
             return plantGraph;
         }
     }

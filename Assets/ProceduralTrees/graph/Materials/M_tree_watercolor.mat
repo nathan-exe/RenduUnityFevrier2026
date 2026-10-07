@@ -23,6 +23,10 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _HueOverAge:
+        m_Texture: {fileID: 2800000, guid: 9441b3b1d8768414793fdac51c0501f9, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _albedo:
         m_Texture: {fileID: 2800000, guid: afb1274f8d6e3004fa9d7d6a5ff4f5df, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -38,6 +42,7 @@ Material:
     m_Ints:
     - _pixelsPerUnit: 10
     m_Floats:
+    - _maxAge: 1
     - _maxIterations: 30
     - _smoothing: 20.9
     - _stepSize: 0.1

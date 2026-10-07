@@ -11,6 +11,7 @@ namespace NathanTazi
         private static readonly int SegmentsLsShaderProperty = Shader.PropertyToID("_segments_ls");
         private static readonly int TreeTransformLsToWsShaderProperty = Shader.PropertyToID("_treeTransform_ls_to_ws");
         private static readonly int SegmentCountShaderProperty = Shader.PropertyToID("_segmentCount");
+        private static readonly int MaxAgeShaderProperty = Shader.PropertyToID("_maxAge");
 
         [SerializeField]
         private LSystemGenerator generator;
@@ -88,6 +89,7 @@ namespace NathanTazi
             materialBlock.SetBuffer(SegmentsLsShaderProperty, buffer);
             materialBlock.SetMatrix(TreeTransformLsToWsShaderProperty, transform.localToWorldMatrix);
             materialBlock.SetInteger(SegmentCountShaderProperty, generator.Graph.segments.Count);  
+            materialBlock.SetFloat(MaxAgeShaderProperty, generator.Graph.maxTraveledDistance);  
             _meshRenderer.SetPropertyBlock(materialBlock);
         }
 

@@ -8,6 +8,7 @@ namespace NathanTazi
     {
         public List<Segment> segments = new();
         public List<Leaf> leaves = new();
+        public float maxTraveledDistance;
 
         public struct Leaf
         {
