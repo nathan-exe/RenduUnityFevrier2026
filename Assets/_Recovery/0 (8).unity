@@ -14619,14 +14619,12 @@ MonoBehaviour:
   _lightAngleInDegrees: 0
   _lightColorIndex01: 0
   _seedIndex: 0
-  _growthSmoothTime: 3
+  _waterSmoothTime: 1
   _generator: {fileID: 1822610061}
   _light: {fileID: 114151871}
   _lightParent: {fileID: 640018653}
   _treeMaterial: {fileID: 2100000, guid: e04848f0dd5a65846b1c7b2e961795cd, type: 2}
   _hueMapOverAge: {fileID: 0}
-  _treeGrowthLevel: 0
-  _smoothedTreeGrowthLevel: 0
 --- !u!1 &1828568016
 GameObject:
   m_ObjectHideFlags: 0

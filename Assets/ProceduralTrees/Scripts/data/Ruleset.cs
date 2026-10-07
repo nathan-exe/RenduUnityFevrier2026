@@ -20,7 +20,6 @@ namespace NathanTazi
                     char key = input[0];
                     string value = input.Split(" -> ")[1];
                     Add(key,value);
-                    Debug.Log("key : "+key+", value : "+value);
                 }catch(System.IndexOutOfRangeException){}
             }
             return this;

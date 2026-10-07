@@ -13,7 +13,7 @@ Shader "Vegetation/RaymarchedTree"
         
         //material
         _lightGradient ("lightGradient", 2D) = "white" {}
-        _hueOverAge ("HueOverAge", 2D) = "white" {}
+        _hueMapOverAge ("Hue Map Over Age", 2D) = "white" {}
         _maxAge ("maxAge", Float) = 1
     }
 
@@ -57,7 +57,7 @@ Shader "Vegetation/RaymarchedTree"
 
             //material
             sampler2D  _lightGradient;
-            sampler2D  _hueOverAge;
+            sampler2D  _hueMapOverAge;
             float _maxAge;
             
             //== shader functions ==
@@ -193,11 +193,15 @@ Shader "Vegetation/RaymarchedTree"
             
                 //pixel shading
                 float lambert = max(0,dot(closesResult.yzw,_MainLightPosition.xyz));
-                float3 col = tex2D(_lightGradient,float2(round(lambert*3)/3,0));
+                float3 col = tex2D(_lightGradient,float2(lambert,0));
                 //todo : hue shift in data
                 float normalizedAge =  _segments_ls[hitSegmentIndex].age / _maxAge;
-                float3 hueshift = tex2D(_hueOverAge,float2(normalizedAge,0.5f)).x * 2 * PI;
+                float hueshift = tex2D(_hueMapOverAge,float2(normalizedAge,0.5f)).x * 2 * PI;
                 output.color = float4(hueShift(col,hueshift),1);
+                lambert = round(lambert*3)/3;
+                lambert = pow(lambert,.5);
+                output.color *= lambert*.5+.5;
+                output.color *= normalizedAge+1;
                 //output.color = float4(hueshift,1);
                 //output.color = float4(normalizedAge,normalizedAge,normalizedAge,1);
                 output.depth = 1;

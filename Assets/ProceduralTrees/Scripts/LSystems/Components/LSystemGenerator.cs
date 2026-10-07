@@ -58,7 +58,7 @@ namespace NathanTazi
             
         }
 
-        private void Update()
+        private void LateUpdate()
         {
             RefreshGraph();
         }
