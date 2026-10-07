@@ -2,12 +2,14 @@ using System;
 using NathanTazi;
 using Unity.Collections;
 using UnityEngine;
+using UnityEngine.Experimental.GlobalIllumination;
 using UnityEngine.VFX;
 
 public class LsystemLeafVFX : MonoBehaviour
 {
     [Header("Refs")]
     [SerializeField] private LSystemGenerator _generator;
+    [SerializeField] private Light _light;
 
     [SerializeField] private VisualEffect _vfx;
     GraphicsBuffer _positionBuffer ;
@@ -35,10 +37,11 @@ public class LsystemLeafVFX : MonoBehaviour
             data[i*2+1] = worldNormal;
             Debug.DrawRay(worldPos,worldNormal*.1f,Color.red);
         }
-            
+        
         _positionBuffer.SetData(data);
         _vfx.SetInt("LeafCount",_generator.Graph.leaves.Count);
         _vfx.SetFloat("leafSizeMultiplier",_generator.lsystem.totalGrowth);
+        _vfx.SetVector3("LightDirection",_light.transform.forward);
         data.Dispose();
     }
 
