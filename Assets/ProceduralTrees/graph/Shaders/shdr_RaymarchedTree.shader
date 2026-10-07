@@ -204,7 +204,11 @@ Shader "Vegetation/RaymarchedTree"
                 output.color *= normalizedAge+1;
                 //output.color = float4(hueshift,1);
                 //output.color = float4(normalizedAge,normalizedAge,normalizedAge,1);
-                output.depth = 1;
+
+                float3 worldPos = localRayOrigin + closesResult.x * localRayDirection;
+                float4 linearDepth = TransformWorldToHClip(mul(_treeTransform_ls_to_ws,float4( worldPos,1)));
+                float depth = linearDepth.z / linearDepth.w;
+                output.depth = depth;
                 return output;
                 
                 // === shading du pixel ===

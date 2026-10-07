@@ -87,12 +87,9 @@ public class ArduinoTreeController : MonoBehaviour
         _hueMapOverAge.Reinitialize(newTextureWidth,1);
         for (int x = 0; x < newTextureWidth; x++)
         {
-            print("Previous Texture width : "+ previousTextureWidth +"; new witdh : "+newTextureWidth);            
-            
             if( x >= previousTextureWidth)
                 pixelValues[x] = lightHueShift01;
             _hueMapOverAge.SetPixel(x, 0,new Color(pixelValues[x],pixelValues[x],pixelValues[x]));
-            print("Set pixel "+ x+" to value : "+pixelValues[x]);            
         }
         _hueMapOverAge.Apply();
         _treeMaterial.SetTexture(HUE_MAP_OVER_AGE_SHADER_PROPERTY_INDEX,_hueMapOverAge);
