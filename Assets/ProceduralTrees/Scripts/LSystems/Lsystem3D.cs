@@ -185,7 +185,9 @@ namespace NathanTazi
                             Vector3 b = turtle.point;
                             plantGraph.segments.Add(new Segment(plantStart, b, turtle.oldRadius,turtle.currentRadius,turtle.traveledDistance));
                             turtle.oldRadius = turtle.currentRadius;
+                            
                         }
+                        
                         
                         plantGraph.leaves.Add(new(
                             turtle.point,
