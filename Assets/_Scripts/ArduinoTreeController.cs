@@ -47,6 +47,8 @@ public class ArduinoTreeController : MonoBehaviour
         
         _smoothedTreeGrowthLevel = Mathf.SmoothDamp(_smoothedTreeGrowthLevel, _treeGrowthLevel, ref _growthRate,_growthSmoothTime);
         _generator.totalGrowth = _smoothedTreeGrowthLevel;
+        _generator.lsystem.PitchAngleRange.x += Mathf.Cos(Time.time * 2 * Mathf.PI)*5*Time.captureDeltaTime;
+        
     }
     
     
@@ -60,7 +62,6 @@ public class ArduinoTreeController : MonoBehaviour
         _treeMaterial.SetTexture(HUE_MAP_OVER_AGE_SHADER_PROPERTY_INDEX,_hueMapOverAge);
         
         Reset();
-        
     }
 
     private int previousTextureWidth = 1;

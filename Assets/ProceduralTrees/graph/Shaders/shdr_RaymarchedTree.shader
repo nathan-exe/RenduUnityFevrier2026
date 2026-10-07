@@ -196,7 +196,7 @@ Shader "Vegetation/RaymarchedTree"
                 float3 col = tex2D(_lightGradient,float2(lambert,0));
                 //todo : hue shift in data
                 float normalizedAge =  _segments_ls[hitSegmentIndex].age / _maxAge;
-                float hueshift = tex2D(_hueMapOverAge,float2(normalizedAge,0.5f)).x * 2 * PI;
+                float hueshift = tex2D(_hueMapOverAge,float2(normalizedAge,0.5f)).x * 2 * PI+.1;
                 output.color = float4(hueShift(col,hueshift),1);
                 lambert = round(lambert*3)/3;
                 lambert = pow(lambert,.5);

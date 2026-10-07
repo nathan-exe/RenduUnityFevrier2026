@@ -10,38 +10,41 @@ public class LsystemLeafVFX : MonoBehaviour
     [SerializeField] private LSystemGenerator _generator;
 
     [SerializeField] private VisualEffect _vfx;
-    GraphicsBuffer buffer ;
+    GraphicsBuffer _positionBuffer ;
     
     private void Update()
     {
         
-        if (buffer == null || buffer.count< _generator.Graph.leaves.Count)
+        if (_positionBuffer == null || _positionBuffer.count< _generator.Graph.leaves.Count*2)
         {
-            buffer?.Release();
-            buffer = new(
+            _positionBuffer?.Release();
+            _positionBuffer = new(
                 GraphicsBuffer.Target.Structured,
-                _generator.Graph.leaves.Count, sizeof(float) * 3);
-            _vfx.SetGraphicsBuffer("positionBuffer",buffer);
+                _generator.Graph.leaves.Count*2, sizeof(float) * 3);
+            _vfx.SetGraphicsBuffer("positionBuffer",_positionBuffer);
         }
         
         
         NativeArray<Vector3> data = new NativeArray<Vector3>(
-            _generator.Graph.leaves.Count, Allocator.Temp);
+            _generator.Graph.leaves.Count*2, Allocator.Temp);
         for (int i = 0; i < _generator.Graph.leaves.Count; i++)
         {
             Vector3 worldPos =  /*_generator.Graph.leaves[i].branchTransform **/transform.localToWorldMatrix * (Vector4)_generator.Graph.leaves[i].localPosition;
-            data[i] = worldPos;
-            Debug.DrawRay(worldPos,Vector3.up*.1f,Color.red);
+            Vector3 worldNormal =  /*_generator.Graph.leaves[i].branchTransform **/transform.localToWorldMatrix * _generator.Graph.leaves[i].branchTransform * new Vector4(0,1,0,1);
+            data[i*2] = worldPos;
+            data[i*2+1] = worldNormal;
+            Debug.DrawRay(worldPos,worldNormal*.1f,Color.red);
         }
             
-        buffer.SetData(data);
+        _positionBuffer.SetData(data);
         _vfx.SetInt("LeafCount",_generator.Graph.leaves.Count);
+        _vfx.SetFloat("leafSizeMultiplier",_generator.lsystem.totalGrowth);
         data.Dispose();
     }
 
     private void OnDestroy()
     {
-        buffer.Dispose();
+        _positionBuffer.Dispose();
     }
     
 }
