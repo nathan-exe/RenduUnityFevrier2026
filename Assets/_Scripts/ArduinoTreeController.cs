@@ -3,10 +3,12 @@ using NathanTazi;
 using UnityEngine;
 using UnityEngine.Experimental.GlobalIllumination;
 using UnityEngine.Experimental.Rendering;
+using UnityEngine.VFX;
 
 public class ArduinoTreeController : MonoBehaviour
 {
     private static readonly int HUE_MAP_OVER_AGE_SHADER_PROPERTY_INDEX = Shader.PropertyToID("_hueMapOverAge");
+    private static readonly int LightHueShiftShaderPropertyID = Shader.PropertyToID("_lightHueShift");
 
     [Header("Debug values")]
     [SerializeField][Range(0,1)] private float _waterLevel01;
@@ -22,6 +24,7 @@ public class ArduinoTreeController : MonoBehaviour
     [SerializeField] private Light _light;
     [SerializeField] private Transform _lightParent;
     [SerializeField] private Material _treeMaterial;
+    [SerializeField] private VisualEffect _leafVFX;
     
     [SerializeField] private Texture2D _hueMapOverAge;
 
@@ -78,10 +81,9 @@ public class ArduinoTreeController : MonoBehaviour
         _light.color = Color.HSVToRGB(h,s,v);
         
         //light angle
-        _lightParent.transform.rotation = Quaternion.Euler(lightAngleInDegrees, 0, 0);
+        _lightParent.transform.localRotation = Quaternion.Euler(lightAngleInDegrees+180, 0, 0);
         
         //water level
-        
         int newTextureWidth = Mathf.CeilToInt(_smoothedTreeGrowthLevel*COLOR_HUE_MAP_WIDTH_WHEN_TREE_IS_GROWN);
         
         //set hue shift over age
@@ -95,10 +97,15 @@ public class ArduinoTreeController : MonoBehaviour
         _hueMapOverAge.Apply();
         _treeMaterial.SetTexture(HUE_MAP_OVER_AGE_SHADER_PROPERTY_INDEX,_hueMapOverAge);
         
+        _leafVFX.SetFloat("HueShift",lightHueShift01);
+        _treeMaterial.SetFloat(LightHueShiftShaderPropertyID,lightHueShift01);
+            
         _treeGrowthLevel = Mathf.Pow(waterLevel01,.5f);
         _generator.totalGrowth = _smoothedTreeGrowthLevel;
 
         previousTextureWidth = newTextureWidth;
+        
+        
         
         
     }

@@ -26,7 +26,6 @@ public class LsystemLeafVFX : MonoBehaviour
             _vfx.SetGraphicsBuffer("positionBuffer",_positionBuffer);
         }
         
-        
         NativeArray<Vector3> data = new NativeArray<Vector3>(
             _generator.Graph.leaves.Count*2, Allocator.Temp);
         for (int i = 0; i < _generator.Graph.leaves.Count; i++)
