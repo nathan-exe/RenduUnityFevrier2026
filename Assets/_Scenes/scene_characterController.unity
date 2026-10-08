@@ -356,8 +356,8 @@ Transform:
   m_GameObject: {fileID: 253369532}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.5135727, y: 5.3851576, z: 0.39204246}
-  m_LocalScale: {x: 6.789137, y: 11.070314, z: 4.75765}
+  m_LocalPosition: {x: -0.0055825748, y: 0.1657348, z: 0.00024328986}
+  m_LocalScale: {x: 0.031165149, y: 0.35146958, z: 0.020486578}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2115100534}
@@ -1640,13 +1640,13 @@ MonoBehaviour:
     PitchAngleRange: {x: 23.7, y: 4.9}
     RollAngleRange: {x: -20, y: 0}
     verticalAngleBiasStrength: 0
-    baseRadius: 0.14999998
+    baseRadius: 0.01
     _radiusDivisionStrength01: 0.436
-    growthThisStep: 0.99999905
-    totalGrowth: 0.99999976
+    growthThisStep: 0
+    totalGrowth: 0
     enableBranchReduction: 1
   _axiom: fx
-  totalGrowth: 0.99999976
+  totalGrowth: 0
   iterations: 4
   radiusRangeOverLife: {x: 0.01, y: 0.15}
 --- !u!114 &2115100538
@@ -1661,7 +1661,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4cfd463e47ee67443bab36ea3c73bbfa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArduinoTreeGenerator
-  _waterLevel01: 1
+  _waterLevel01: 0
   _lightAngleInDegrees: 0
   _lightHueShift01: 0
   _seedIndex: 0
@@ -1672,8 +1672,8 @@ MonoBehaviour:
   _treeMaterial: {fileID: 2100000, guid: e04848f0dd5a65846b1c7b2e961795cd, type: 2}
   _leafVFX: {fileID: 1521325862}
   _hueMapOverAge: {fileID: 0}
-  _treeGrowthLevel: 1
-  _smoothedTreeGrowthLevel: 0.99999976
+  _treeGrowthLevel: 0
+  _smoothedTreeGrowthLevel: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

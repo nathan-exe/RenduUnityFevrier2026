@@ -200,7 +200,7 @@ Shader "Vegetation/RaymarchedTree"
                 //todo : hue shift in data
                 float normalizedAge =  _segments_ls[hitSegmentIndex].age / _maxAge;
                 float branchHueshift = tex2D(_hueMapOverAge,float2(normalizedAge,0.5f)).x * 2 * PI+.1;
-                output.color = float4(  lerp(hueShift(col,branchHueshift) , hueShift(col,_lightHueShift*2*PI),.5),1) *.7;
+                output.color = float4(  lerp(hueShift(col,branchHueshift) , hueShift(col,_lightHueShift*2*PI),0),1) *.7;
                 lambert = pow(lambert,.5);
                
                 output.color *= lambert*.5+.5;

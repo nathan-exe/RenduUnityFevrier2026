@@ -50,7 +50,7 @@ Material:
     m_Ints:
     - _pixelsPerUnit: 10
     m_Floats:
-    - _lightHueShift: 1
+    - _lightHueShift: 0.333
     - _maxAge: 1
     - _maxIterations: 30
     - _smoothing: 20.9
